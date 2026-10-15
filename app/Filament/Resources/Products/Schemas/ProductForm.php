@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Support\ImageProcessor;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -9,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ProductForm
 {
@@ -56,16 +58,19 @@ class ProductForm
                     ->helperText('Leave empty if there is no discount. Discount % is calculated automatically.'),
                 FileUpload::make('image_paths')
                     ->label('Images')
-                    ->image()
                     ->multiple()
                     ->reorderable()
                     ->appendFiles()
                     ->disk('public')
                     ->directory('products')
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                     ->maxSize(2048)
                     ->maxFiles(8)
                     ->panelLayout('grid')
-                    ->helperText('Up to 8 images, max 2 MB each. The first image is the main image. Drag to change the order.')
+                    ->saveUploadedFileUsing(
+                        fn (TemporaryUploadedFile $file): string => ImageProcessor::storeAsWebp($file->getRealPath(), 'products')
+                    )
+                    ->helperText('JPG, PNG or WebP. Up to 8 images, max 2 MB each. Images are resized and converted to WebP automatically. The first image is the main image. Drag to change the order.')
                     ->columnSpanFull(),
             ]);
     }
