@@ -8,16 +8,29 @@ use Illuminate\Validation\ValidationException;
 
 class ImageProcessor
 {
-    public const MAX_SIDE = 1600;        // লম্বা দিক সর্বোচ্চ ১৬০০ পিক্সেল
+    public const MAX_SIDE = 1600;        // product ছবি: লম্বা দিক সর্বোচ্চ ১৬০০ পিক্সেল
+    public const QUALITY = 82;           // product ছবি: WebP কোয়ালিটি
+
+    public const HERO_MAX_SIDE = 2000;   // hero ছবি: লম্বা দিক সর্বোচ্চ ২০০০ পিক্সেল
+    public const HERO_QUALITY = 85;      // hero ছবি: WebP কোয়ালিটি
+
     public const MAX_PIXELS = 16000000;  // সর্বোচ্চ ১৬ মেগাপিক্সেল (সার্ভারের মেমোরি বাঁচাতে)
-    public const QUALITY = 82;           // WebP কোয়ালিটি
 
     /**
      * ছবি পড়ে, দরকার হলে ছোট করে WebP বানিয়ে public ডিস্কে রাখে।
+     * $maxSide ও $quality না দিলে product ছবির ডিফল্ট মান ব্যবহার হয়।
      * ফেরত দেয়: সংরক্ষিত ফাইলের পাথ (যেমন products/xxxx.webp)
      */
-    public static function storeAsWebp(string $sourcePath, string $directory, string $errorField = 'data.image_paths'): string
-    {
+    public static function storeAsWebp(
+        string $sourcePath,
+        string $directory,
+        string $errorField = 'data.image_paths',
+        ?int $maxSide = null,
+        ?int $quality = null,
+    ): string {
+        $maxSide ??= self::MAX_SIDE;
+        $quality ??= self::QUALITY;
+
         $info = @getimagesize($sourcePath);
 
         if ($info === false || ! in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
@@ -63,8 +76,8 @@ class ImageProcessor
         $width = imagesx($image);
         $height = imagesy($image);
 
-        if (max($width, $height) > self::MAX_SIDE) {
-            $scale = self::MAX_SIDE / max($width, $height);
+        if (max($width, $height) > $maxSide) {
+            $scale = $maxSide / max($width, $height);
             $resized = imagescale($image, (int) round($width * $scale), (int) round($height * $scale), IMG_BICUBIC);
 
             if ($resized !== false) {
@@ -76,7 +89,7 @@ class ImageProcessor
         imagesavealpha($image, true);
 
         ob_start();
-        imagewebp($image, null, self::QUALITY);
+        imagewebp($image, null, $quality);
         $data = ob_get_clean();
 
         if ($data === false || $data === '') {
