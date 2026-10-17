@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Models\Setting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
 class StoreController
 {
@@ -44,5 +45,29 @@ class StoreController
         $page = Page::where('slug', $slug)->firstOrFail();
 
         return view('page', compact('page'));
+    }
+
+    public function wishlist(): View
+    {
+        return view('wishlist');
+    }
+
+    // Returns only the product cards (HTML) for the ids saved in the visitor's browser
+    public function wishlistItems(Request $request): View
+    {
+        $ids = collect(explode(',', (string) $request->query('ids')))
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->unique()
+            ->take(100)
+            ->values();
+
+        $products = Product::with('images')
+            ->whereIn('id', $ids)
+            ->get()
+            ->sortBy(fn ($product) => $ids->search($product->id))
+            ->values();
+
+        return view('wishlist-items', compact('products'));
     }
 }

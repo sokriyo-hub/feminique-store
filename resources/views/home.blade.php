@@ -29,12 +29,12 @@
 
             <div class="pointer-events-none absolute inset-0 bg-cocoa/25"></div>
 
-            {{-- Shop Now (নিচে-বামে) --}}
+            {{-- Shop Now (bottom-left) --}}
             <div class="wrap absolute inset-x-0 bottom-14 lg:bottom-16">
                 <a href="#collections" draggable="false" class="inline-block border border-ivory bg-transparent px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-ivory transition duration-500 hover:bg-ivory hover:text-cocoa">{{ __('Shop Now') }}</a>
             </div>
 
-            {{-- দাগ-সূচক (নিচের মাঝখানে) --}}
+            {{-- Line indicators (bottom centre) --}}
             @if (count($slides) > 1)
                 <div class="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2 lg:bottom-6" @pointerdown.stop>
                     <template x-for="k in n" :key="k">
@@ -58,67 +58,72 @@
         </section>
     @endif
 
-    {{-- Categories (এক সারি, টেনে বা swipe করে দেখা যায়, endless loop, সংখ্যার সীমা নেই) --}}
-    @if ($categories->isNotEmpty())
-        <section id="collections" class="wrap scroll-mt-24 py-24" x-data="dragScroll">
-            <div class="relative text-center" data-reveal>
-                <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Collections') }}</p>
-                <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('Shop by Category') }}</h2>
+    {{-- White area: from below the hero down to the footer (the negative bottom margin covers the footer's top gap) --}}
+    <div class="-mb-24 bg-white pb-24">
 
-                <div class="absolute bottom-0 right-0 hidden gap-3 lg:flex" x-show="thumbW < 99.5">
-                    <button type="button" @click="by(-1)" :disabled="!canLeft" aria-label="{{ __('Previous') }}" class="{{ $arrowButton }} border-taupe/60 text-cocoa hover:bg-cocoa hover:text-ivory">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
-                    </button>
-                    <button type="button" @click="by(1)" :disabled="!canRight" aria-label="{{ __('Next') }}" class="{{ $arrowButton }} border-taupe/60 text-cocoa hover:bg-cocoa hover:text-ivory">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
-                    </button>
+        {{-- Categories (one row, drag or swipe, endless loop, no limit on the number) --}}
+        @if ($categories->isNotEmpty())
+            <section id="collections" class="wrap scroll-mt-24 py-24" x-data="dragScroll">
+                <div class="relative text-center" data-reveal>
+                    <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Collections') }}</p>
+                    <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('Shop by Category') }}</h2>
+
+                    <div class="absolute bottom-0 right-0 hidden gap-3 lg:flex" x-show="thumbW < 99.5">
+                        <button type="button" @click="by(-1)" :disabled="!canLeft" aria-label="{{ __('Previous') }}" class="{{ $arrowButton }} border-taupe/60 text-cocoa hover:bg-cocoa hover:text-ivory">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
+                        </button>
+                        <button type="button" @click="by(1)" :disabled="!canRight" aria-label="{{ __('Next') }}" class="{{ $arrowButton }} border-taupe/60 text-cocoa hover:bg-cocoa hover:text-ivory">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div x-ref="track"
-                 @scroll.passive="update()"
-                 @mousedown="down($event)"
-                 @mousemove.window="move($event)"
-                 @mouseup.window="up()"
-                 @click.capture="guard($event)"
-                 :class="dragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-proximity'"
-                 class="relative mt-14 flex select-none gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-6">
-                @foreach ($categories as $category)
-                    <a href="{{ route('category.show', $category->slug) }}" draggable="false" data-cat
-                       class="group block w-[62%] shrink-0 snap-start sm:w-[38%] md:w-[28%] lg:w-[21%] 2xl:w-[16%]">
-                        <div class="aspect-[4/5] overflow-hidden bg-beige">
-                            @if ($category->image)
-                                <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" loading="lazy" draggable="false"
-                                     class="h-full w-full object-cover transition duration-[1400ms] ease-out group-hover:scale-[1.05]">
-                            @else
-                                <div class="flex h-full w-full items-center justify-center">
-                                    <span class="font-serif text-lg uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="mt-4">
-                            <span class="nav-link font-serif text-2xl leading-tight lg:text-[1.65rem]">{{ $category->name }}</span>
-                        </div>
-                    </a>
-                @endforeach
-            </div>
-        </section>
-    @endif
+                <div x-ref="track"
+                     @scroll.passive="update()"
+                     @mousedown="down($event)"
+                     @mousemove.window="move($event)"
+                     @mouseup.window="up()"
+                     @click.capture="guard($event)"
+                     :class="dragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-proximity'"
+                     class="relative mt-14 flex select-none gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-6">
+                    @foreach ($categories as $category)
+                        <a href="{{ route('category.show', $category->slug) }}" draggable="false" data-cat
+                           class="group block w-[62%] shrink-0 snap-start sm:w-[38%] md:w-[28%] lg:w-[21%] 2xl:w-[16%]">
+                            <div class="aspect-[4/5] overflow-hidden bg-beige">
+                                @if ($category->image)
+                                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" loading="lazy" draggable="false"
+                                         class="h-full w-full object-cover transition duration-[1400ms] ease-out group-hover:scale-[1.05]">
+                                @else
+                                    <div class="flex h-full w-full items-center justify-center">
+                                        <span class="font-serif text-lg uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="mt-4">
+                                <span class="nav-link font-serif text-2xl leading-tight lg:text-[1.65rem]">{{ $category->name }}</span>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
 
-    {{-- New Arrivals --}}
-    @if ($newArrivals->isNotEmpty())
-        <section id="new-arrivals" class="wrap pb-8">
-            <div class="text-center" data-reveal>
-                <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Just in') }}</p>
-                <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('New Arrivals') }}</h2>
-            </div>
+        {{-- New Arrivals --}}
+        @if ($newArrivals->isNotEmpty())
+            <section id="new-arrivals" class="wrap pb-8">
+                <div class="text-center" data-reveal>
+                    <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Just in') }}</p>
+                    <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('New Arrivals') }}</h2>
+                </div>
 
-            <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
-                @foreach ($newArrivals as $product)
-                    <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
-                @endforeach
-            </div>
-        </section>
-    @endif
+                <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+                    @foreach ($newArrivals as $product)
+                        <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+    </div>
 
 </x-store-layout>

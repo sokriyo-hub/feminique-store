@@ -42,8 +42,16 @@
                class="-mr-[0.35em] font-serif font-medium uppercase tracking-[0.35em] text-cocoa transition-all duration-500"
                :class="scrolled ? 'text-2xl' : 'text-3xl lg:text-4xl'">Feminique</a>
 
-            {{-- এই জায়গায় পরে Search ও Cart আইকন বসবে --}}
-            <div class="flex items-center justify-end gap-5"></div>
+            {{-- Right side: Wishlist now; Search and Cart icons will be added here later --}}
+            <div class="flex items-center justify-end gap-5">
+                <a href="{{ route('wishlist') }}" class="relative p-1 text-cocoa transition-colors hover:text-mocha" aria-label="{{ __('Wishlist') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                    <span x-show="$store.wishlist.count > 0" x-cloak x-text="$store.wishlist.count"
+                          class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[10px] leading-none text-ivory"></span>
+                </a>
+            </div>
         </div>
 
         @if ($categories->isNotEmpty())

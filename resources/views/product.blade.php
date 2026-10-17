@@ -84,6 +84,21 @@
                     @endif
                 </div>
 
+                {{-- Actions (Add to cart and Buy now will be added to this row in S7) --}}
+                <div class="mt-8 flex flex-wrap gap-3">
+                    <button type="button" x-data
+                            @click="$store.wishlist.toggle({{ $product->id }})"
+                            :aria-pressed="$store.wishlist.has({{ $product->id }})"
+                            class="inline-flex items-center gap-3 border border-cocoa/40 px-8 py-4 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"
+                             :fill="$store.wishlist.has({{ $product->id }}) ? 'currentColor' : 'none'">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                        </svg>
+                        <span x-show="!$store.wishlist.has({{ $product->id }})">{{ __('Add to wishlist') }}</span>
+                        <span x-show="$store.wishlist.has({{ $product->id }})" x-cloak>{{ __('Saved to wishlist') }}</span>
+                    </button>
+                </div>
+
                 @if ($product->description)
                     <div class="mt-10 border-t border-taupe/30 pt-10">
                         <p class="whitespace-pre-line leading-8 text-cocoa/90">{{ $product->description }}</p>
