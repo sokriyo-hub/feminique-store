@@ -47,6 +47,41 @@ class StoreController
         return view('page', compact('page'));
     }
 
+    // Search: every word must match the product name, description or category name
+    public function search(Request $request): View
+    {
+        $raw = $request->query('q');
+        $term = is_string($raw) ? mb_substr(trim(preg_replace('/\s+/u', ' ', $raw)), 0, 60) : '';
+
+        $products = null;
+
+        if (mb_strlen($term) >= 2) {
+            $words = array_slice(explode(' ', $term), 0, 5);
+            $phrase = '%' . addcslashes($term, '\\%_') . '%';
+
+            $query = Product::with('images');
+
+            foreach ($words as $word) {
+                $like = '%' . addcslashes($word, '\\%_') . '%';
+
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'like', $like)
+                        ->orWhere('description', 'like', $like)
+                        ->orWhereHas('category', fn ($c) => $c->where('name', 'like', $like));
+                });
+            }
+
+            $products = $query
+                ->orderByRaw('CASE WHEN name LIKE ? THEN 0 ELSE 1 END', [$phrase])
+                ->latest()
+                ->orderByDesc('id')
+                ->paginate(12)
+                ->withQueryString();
+        }
+
+        return view('search', compact('term', 'products'));
+    }
+
     public function wishlist(): View
     {
         return view('wishlist');

@@ -30,7 +30,7 @@
     @endif
 
     {{-- Header --}}
-    <header x-data="{ open: false, scrolled: false }"
+    <header x-data="{ open: false, scrolled: false, searching: false }"
             @scroll.window.passive="scrolled = window.scrollY > 24"
             class="sticky top-0 z-40 bg-ivory/90 backdrop-blur-md transition-colors duration-500"
             :class="scrolled ? 'border-b border-taupe/30' : 'border-b border-transparent'">
@@ -39,7 +39,7 @@
              :class="scrolled ? 'py-3' : 'py-6 lg:py-8'">
 
             <div>
-                <button type="button" class="-ml-1 p-1 lg:hidden" @click="open = !open" :aria-expanded="open" aria-label="{{ __('Menu') }}">
+                <button type="button" class="-ml-1 p-1 lg:hidden" @click="open = !open; searching = false" :aria-expanded="open" aria-label="{{ __('Menu') }}">
                     <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" d="M4 8h16M4 16h16"/></svg>
                     <svg x-show="open" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
                 </button>
@@ -49,8 +49,17 @@
                class="-mr-[0.35em] font-serif font-medium uppercase tracking-[0.35em] text-cocoa transition-all duration-500"
                :class="scrolled ? 'text-2xl' : 'text-3xl lg:text-4xl'">Feminique</a>
 
-            {{-- Right side: Wishlist now; Search and Cart icons will be added here later --}}
+            {{-- Right side: Search and Wishlist; Cart icon will be added here in S7 --}}
             <div class="flex items-center justify-end gap-5">
+                <button type="button" class="p-1 text-cocoa transition-colors hover:text-mocha"
+                        @click="searching = !searching; open = false; if (searching) $nextTick(() => $refs.q.focus())"
+                        :aria-expanded="searching" aria-label="{{ __('Search') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="M20 20l-3.5-3.5"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('wishlist') }}" class="relative p-1 text-cocoa transition-colors hover:text-mocha" aria-label="{{ __('Wishlist') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">
                         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
@@ -84,6 +93,27 @@
                 </ul>
             </nav>
         @endif
+
+        {{-- Search bar (opens under the header) --}}
+        <div x-show="searching" x-cloak x-transition.opacity.duration.300ms class="border-t border-taupe/30">
+            <form action="{{ route('search') }}" method="GET" role="search"
+                  @keydown.escape.window="searching = false"
+                  class="wrap flex items-center gap-4 py-4">
+                <input x-ref="q" type="search" name="q" required maxlength="60" autocomplete="off"
+                       placeholder="{{ __('Search jewellery') }}"
+                       aria-label="{{ __('Search') }}"
+                       class="min-w-0 flex-1 border-0 border-b border-taupe/60 bg-transparent py-2 font-serif text-xl text-cocoa placeholder:text-cocoa/40 focus:border-cocoa focus:outline-none focus:ring-0 lg:text-2xl">
+                <button type="submit" class="p-1 text-cocoa transition-colors hover:text-mocha" aria-label="{{ __('Search') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="M20 20l-3.5-3.5"/>
+                    </svg>
+                </button>
+                <button type="button" @click="searching = false" class="p-1 text-cocoa/70 transition-colors hover:text-cocoa" aria-label="{{ __('Close') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </form>
+        </div>
     </header>
 
     @if ($back)

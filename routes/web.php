@@ -17,6 +17,10 @@ Route::get('/pages/{slug}', [StoreController::class, 'page'])
     ->where('slug', '[A-Za-z0-9_-]+')
     ->name('page.show');
 
+Route::get('/search', [StoreController::class, 'search'])
+    ->middleware('throttle:60,1')
+    ->name('search');
+
 Route::get('/wishlist', [StoreController::class, 'wishlist'])->name('wishlist');
 
 Route::get('/wishlist/items', [StoreController::class, 'wishlistItems'])
