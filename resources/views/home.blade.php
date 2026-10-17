@@ -58,7 +58,7 @@
         </section>
     @endif
 
-    {{-- Categories (এক সারি, টেনে বা swipe করে দেখা যায়, সংখ্যার সীমা নেই) --}}
+    {{-- Categories (এক সারি, টেনে বা swipe করে দেখা যায়, endless loop, সংখ্যার সীমা নেই) --}}
     @if ($categories->isNotEmpty())
         <section id="collections" class="wrap scroll-mt-24 py-24" x-data="dragScroll">
             <div class="relative text-center" data-reveal>
@@ -82,9 +82,9 @@
                  @mouseup.window="up()"
                  @click.capture="guard($event)"
                  :class="dragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-proximity'"
-                 class="mt-14 flex select-none gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-6">
+                 class="relative mt-14 flex select-none gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-6">
                 @foreach ($categories as $category)
-                    <a href="{{ route('category.show', $category->slug) }}" draggable="false"
+                    <a href="{{ route('category.show', $category->slug) }}" draggable="false" data-cat
                        class="group block w-[62%] shrink-0 snap-start sm:w-[38%] md:w-[28%] lg:w-[21%] 2xl:w-[16%]">
                         <div class="aspect-[4/5] overflow-hidden bg-beige">
                             @if ($category->image)
@@ -96,9 +96,8 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="mt-4 flex items-baseline justify-between gap-3">
+                        <div class="mt-4">
                             <span class="nav-link font-serif text-2xl leading-tight lg:text-[1.65rem]">{{ $category->name }}</span>
-                            <span class="shrink-0 text-[11px] uppercase tracking-[0.25em] text-cocoa/70">{{ $category->products_count }}</span>
                         </div>
                     </a>
                 @endforeach
