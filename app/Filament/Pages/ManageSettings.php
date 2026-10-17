@@ -41,7 +41,6 @@ class ManageSettings extends Page
      */
     public ?array $data = [];
 
-    // এই পেজে যে setting-গুলো আছে (hero_image আলাদা করে সামলানো হয়)
     private const TEXT_KEYS = [
         'footer_address',
         'footer_phone',
@@ -52,7 +51,7 @@ class ManageSettings extends Page
 
     public function mount(): void
     {
-        $values = ['hero_image' => Setting::get('hero_image')];
+        $values = ['hero_images' => Setting::heroImages()];
 
         foreach (self::TEXT_KEYS as $key) {
             $values[$key] = Setting::get($key);
@@ -66,10 +65,15 @@ class ManageSettings extends Page
         return $schema
             ->components([
                 Form::make([
-                    Section::make('Homepage hero image')
+                    Section::make('Homepage hero images')
                         ->schema([
-                            FileUpload::make('hero_image')
-                                ->label('Hero image')
+                            FileUpload::make('hero_images')
+                                ->label('Hero images')
+                                ->multiple()
+                                ->reorderable()
+                                ->appendFiles()
+                                ->maxFiles(5)
+                                ->panelLayout('grid')
                                 ->disk('public')
                                 ->directory('hero')
                                 ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
@@ -78,12 +82,12 @@ class ManageSettings extends Page
                                     fn (TemporaryUploadedFile $file): string => ImageProcessor::storeAsWebp(
                                         $file->getRealPath(),
                                         'hero',
-                                        errorField: 'data.hero_image',
+                                        errorField: 'data.hero_images',
                                         maxSide: ImageProcessor::HERO_MAX_SIDE,
                                         quality: ImageProcessor::HERO_QUALITY,
                                     )
                                 )
-                                ->helperText('JPG, PNG or WebP, max 4 MB. Use a wide (landscape) high-quality image, at least 1600 px wide. It is converted to WebP automatically (up to 2000 px wide).'),
+                                ->helperText('Up to 5 images, JPG, PNG or WebP, max 4 MB each. Use wide (landscape) high-quality images, at least 1600 px wide. One image = fixed hero. More than one = automatic slider (drag to change the order).'),
                         ]),
                     Section::make('Footer')
                         ->schema([
@@ -133,19 +137,16 @@ class ManageSettings extends Page
     {
         $data = $this->form->getState();
 
-        // hero image: নতুন ছবি দিলে পুরোনো ফাইল ডিস্ক থেকে মুছে যাবে
-        $newHero = $data['hero_image'] ?? null;
-        if (is_array($newHero)) {
-            $newHero = array_values($newHero)[0] ?? null;
+        $new = array_values(array_filter((array) ($data['hero_images'] ?? []), 'is_string'));
+        $old = Setting::heroImages();
+
+        // তালিকা থেকে বাদ পড়া ছবির ফাইল ডিস্ক থেকে মুছে যাবে
+        foreach (array_diff($old, $new) as $removed) {
+            Storage::disk('public')->delete($removed);
         }
 
-        $oldHero = Setting::get('hero_image');
-
-        if ($oldHero && $oldHero !== $newHero) {
-            Storage::disk('public')->delete($oldHero);
-        }
-
-        Setting::put('hero_image', $newHero ?: null);
+        Setting::put('hero_images', $new ? json_encode($new, JSON_UNESCAPED_SLASHES) : null);
+        Setting::put('hero_image', $new[0] ?? null);
 
         foreach (self::TEXT_KEYS as $key) {
             $value = $data[$key] ?? null;

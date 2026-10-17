@@ -20,6 +20,8 @@ class StoreLayout extends Component
     public function __construct(
         public ?string $title = null,
         public ?string $description = null,
+        public bool $back = false,
+        public ?string $backUrl = null,
     ) {
         $this->categories = Category::orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'slug']);
         $this->policyPages = Page::orderBy('id')->get(['id', 'title', 'slug']);

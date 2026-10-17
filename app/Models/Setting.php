@@ -19,4 +19,18 @@ class Setting extends Model
     {
         static::updateOrCreate(['name' => $name], ['value' => $value]);
     }
+
+    // hero ছবির তালিকা (ক্রম অনুযায়ী)। নতুন তালিকা না থাকলে পুরোনো একক ছবি ধরা হয়।
+    public static function heroImages(): array
+    {
+        $list = json_decode((string) static::get('hero_images'), true);
+
+        if (is_array($list) && $list) {
+            return array_values(array_filter($list, 'is_string'));
+        }
+
+        $single = static::get('hero_image');
+
+        return $single ? [$single] : [];
+    }
 }

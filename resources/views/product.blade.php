@@ -1,46 +1,78 @@
 @use('App\Support\Money')
 @php
     $imageUrls = $product->images->map(fn ($img) => asset('storage/' . $img->path))->values()->all();
+    $arrowClass = 'absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-cocoa/30 bg-ivory/80 text-cocoa backdrop-blur-sm transition-colors duration-300 hover:bg-cocoa hover:text-ivory';
 @endphp
-<x-store-layout :title="$product->name" :description="\Illuminate\Support\Str::limit(strip_tags((string) $product->description), 150)">
-    <article class="mx-auto max-w-7xl px-6 py-12 lg:px-10 lg:py-20">
+<x-store-layout :title="$product->name"
+                :description="\Illuminate\Support\Str::limit(strip_tags((string) $product->description), 150)"
+                :back="true"
+                :back-url="route('category.show', $product->category->slug)">
+    <article class="wrap py-10 lg:py-14">
 
-        <nav class="text-xs uppercase tracking-[0.25em] text-cocoa/70" aria-label="Breadcrumb">
-            <a href="{{ route('home') }}" class="transition hover:text-cocoa">{{ __('Home') }}</a>
+        <nav class="text-xs uppercase tracking-[0.25em] text-cocoa/70" aria-label="Breadcrumb" data-reveal>
+            <a href="{{ route('home') }}" class="transition-colors hover:text-cocoa">{{ __('Home') }}</a>
             <span class="mx-3">/</span>
-            <a href="{{ route('category.show', $product->category->slug) }}" class="transition hover:text-cocoa">{{ $product->category->name }}</a>
+            <a href="{{ route('category.show', $product->category->slug) }}" class="transition-colors hover:text-cocoa">{{ $product->category->name }}</a>
         </nav>
 
-        <div class="mt-10 grid gap-12 lg:grid-cols-2 lg:gap-20">
+        <div class="mt-8 grid gap-10 lg:grid-cols-[minmax(20rem,calc(62vh*0.8))_minmax(0,1fr)] lg:gap-16 xl:gap-24">
 
             {{-- Gallery --}}
-            <div x-data="{ active: 0, images: @js($imageUrls) }">
-                <div class="aspect-[4/5] overflow-hidden bg-beige">
-                    @if (count($imageUrls))
-                        <img :src="images[active]" src="{{ $imageUrls[0] }}" alt="{{ $product->name }}" class="h-full w-full object-cover">
-                    @else
+            <div class="mx-auto w-full max-w-[calc(62vh*0.8)] lg:mx-0 lg:max-w-none"
+                 x-data="productGallery({{ count($imageUrls) }})"
+                 @keydown.window.arrow-left="prev()"
+                 @keydown.window.arrow-right="next()"
+                 data-reveal>
+
+                <div class="relative aspect-[4/5] select-none overflow-hidden bg-beige"
+                     :class="zoom ? 'cursor-zoom-in' : ''"
+                     @mousemove="onMove($event)"
+                     @mouseleave="zoom = false"
+                     @touchstart.passive="touchStart($event)"
+                     @touchend.passive="touchEnd($event)">
+
+                    @forelse ($imageUrls as $url)
+                        <img src="{{ $url }}" alt="{{ $product->name }}" draggable="false"
+                             @if (! $loop->first) loading="lazy" @endif
+                             class="absolute inset-0 h-full w-full object-cover"
+                             :class="active === {{ $loop->index }} ? 'opacity-100' : 'pointer-events-none opacity-0'"
+                             :style="{
+                                 transition: 'transform 350ms ease-out, opacity 600ms ease',
+                                 transform: (active === {{ $loop->index }} && zoom) ? 'scale(2.4)' : 'scale(1)',
+                                 transformOrigin: ox + '% ' + oy + '%'
+                             }">
+                    @empty
                         <div class="flex h-full w-full items-center justify-center">
                             <span class="font-serif text-2xl uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
                         </div>
+                    @endforelse
+
+                    @if (count($imageUrls) > 1)
+                        <button type="button" data-nozoom @click="prev()" aria-label="{{ __('Previous') }}" class="{{ $arrowClass }} left-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
+                        </button>
+                        <button type="button" data-nozoom @click="next()" aria-label="{{ __('Next') }}" class="{{ $arrowClass }} right-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+                        </button>
                     @endif
                 </div>
 
                 @if (count($imageUrls) > 1)
-                    <div class="mt-4 grid grid-cols-5 gap-3">
-                        <template x-for="(url, i) in images" :key="i">
-                            <button type="button" @click="active = i"
+                    <div class="mt-3 grid grid-cols-5 gap-2.5 sm:grid-cols-6">
+                        @foreach ($imageUrls as $url)
+                            <button type="button" @click="go({{ $loop->index }})"
                                     class="aspect-square overflow-hidden border bg-beige transition"
-                                    :class="active === i ? 'border-cocoa' : 'border-transparent opacity-70 hover:opacity-100'"
-                                    :aria-label="'Image ' + (i + 1)">
-                                <img :src="url" alt="" loading="lazy" class="h-full w-full object-cover">
+                                    :class="active === {{ $loop->index }} ? 'border-cocoa' : 'border-transparent opacity-70 hover:opacity-100'"
+                                    aria-label="Image {{ $loop->iteration }}">
+                                <img src="{{ $url }}" alt="" loading="lazy" draggable="false" class="h-full w-full object-cover">
                             </button>
-                        </template>
+                        @endforeach
                     </div>
                 @endif
             </div>
 
             {{-- Details --}}
-            <div class="lg:pt-6">
+            <div class="max-w-2xl lg:pt-6" data-reveal style="--d: 120ms">
                 <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ $product->category->name }}</p>
                 <h1 class="mt-4 font-serif text-4xl font-light leading-tight lg:text-5xl">{{ $product->name }}</h1>
 

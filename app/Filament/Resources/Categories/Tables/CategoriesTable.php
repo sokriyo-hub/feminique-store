@@ -6,6 +6,7 @@ use App\Models\Category;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -17,6 +18,10 @@ class CategoriesTable
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
             ->columns([
+                ImageColumn::make('image')
+                    ->label('Image')
+                    ->disk('public')
+                    ->square(),
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('slug')
