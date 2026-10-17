@@ -42,12 +42,16 @@ class ManageSettings extends Page
     public ?array $data = [];
 
     private const TEXT_KEYS = [
+        'top_strip_text',
         'footer_address',
         'footer_phone',
         'facebook_url',
         'instagram_url',
         'free_delivery_threshold',
     ];
+
+    // Text shown in the top strip until the admin saves their own
+    private const DEFAULT_TOP_STRIP = 'Cash on Delivery available';
 
     public function mount(): void
     {
@@ -56,6 +60,11 @@ class ManageSettings extends Page
         foreach (self::TEXT_KEYS as $key) {
             $values[$key] = Setting::get($key);
         }
+
+        // Never saved yet: show the default text. Saved as empty: keep it empty (strip hidden).
+        $values['top_strip_text'] = Setting::where('name', 'top_strip_text')->exists()
+            ? Setting::get('top_strip_text')
+            : self::DEFAULT_TOP_STRIP;
 
         $this->form->fill($values);
     }
@@ -88,6 +97,14 @@ class ManageSettings extends Page
                                     )
                                 )
                                 ->helperText('Up to 5 images, JPG, PNG or WebP, max 4 MB each. Use wide (landscape) high-quality images, at least 1600 px wide. One image = fixed hero. More than one = automatic slider (drag to change the order).'),
+                        ]),
+                    Section::make('Top announcement bar')
+                        ->schema([
+                            TextInput::make('top_strip_text')
+                                ->label('Top announcement text')
+                                ->maxLength(120)
+                                ->placeholder('Cash on Delivery available')
+                                ->helperText('Shown in the thin bar above the menu on every page. Leave empty to hide the bar.'),
                         ]),
                     Section::make('Footer')
                         ->schema([
@@ -140,7 +157,7 @@ class ManageSettings extends Page
         $new = array_values(array_filter((array) ($data['hero_images'] ?? []), 'is_string'));
         $old = Setting::heroImages();
 
-        // তালিকা থেকে বাদ পড়া ছবির ফাইল ডিস্ক থেকে মুছে যাবে
+        // Hero images removed from the list are deleted from disk
         foreach (array_diff($old, $new) as $removed) {
             Storage::disk('public')->delete($removed);
         }

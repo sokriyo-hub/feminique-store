@@ -31,8 +31,7 @@
 
             {{-- Shop Now (bottom-left) --}}
             <div class="wrap absolute inset-x-0 bottom-14 lg:bottom-16">
-                <a href="#collections" draggable="false" class="inline-block border border-ivory bg-transparent px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-ivory transition duration-500 hover:bg-ivory hover:text-cocoa">{{ __('Shop Now') }}</a>
-            </div>
+                    <a href="#collections" draggable="false" class="inline-block border border-ivory bg-ivory px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-cocoa transition duration-500 hover:bg-transparent hover:text-ivory">{{ __('Shop Now') }}</a>            </div>
 
             {{-- Line indicators (bottom centre) --}}
             @if (count($slides) > 1)
@@ -53,8 +52,7 @@
         <section class="relative flex h-[60vh] min-h-[380px] w-full items-center justify-center bg-beige px-6 text-center">
             <p class="font-serif text-5xl font-light uppercase tracking-[0.3em] text-cocoa lg:text-7xl">Feminique</p>
             <div class="wrap absolute inset-x-0 bottom-14 text-left lg:bottom-16">
-                <a href="#collections" class="inline-block border border-cocoa bg-transparent px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">{{ __('Shop Now') }}</a>
-            </div>
+<a href="#collections" class="inline-block border border-cocoa bg-cocoa px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-ivory transition duration-500 hover:bg-transparent hover:text-cocoa">{{ __('Shop Now') }}</a>            </div>
         </section>
     @endif
 

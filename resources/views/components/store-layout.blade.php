@@ -4,6 +4,11 @@
     $safeUrl = fn ($url) => is_string($url) && preg_match('#^https?://#i', trim($url)) ? trim($url) : null;
     $facebook = $safeUrl($settings['facebook_url'] ?? null);
     $instagram = $safeUrl($settings['instagram_url'] ?? null);
+
+    // Top strip: default text until the admin saves their own; empty text hides the strip
+    $topStrip = array_key_exists('top_strip_text', $settings)
+        ? trim((string) $settings['top_strip_text'])
+        : __('Cash on Delivery available');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -17,10 +22,12 @@
 </head>
 <body class="flex min-h-screen flex-col">
 
-    {{-- Top strip --}}
-    <div class="bg-cocoa py-2 text-center text-[11px] uppercase tracking-[0.3em] text-ivory/90">
-        {{ __('Cash on Delivery available') }}
-    </div>
+    {{-- Top strip (text editable in admin Settings; empty = hidden) --}}
+    @if ($topStrip !== '')
+        <div class="bg-cocoa py-2 text-center text-[11px] uppercase tracking-[0.3em] text-ivory/90">
+            {{ $topStrip }}
+        </div>
+    @endif
 
     {{-- Header --}}
     <header x-data="{ open: false, scrolled: false }"
