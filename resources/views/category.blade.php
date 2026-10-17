@@ -1,0 +1,40 @@
+<x-store-layout :title="$category->name">
+    <section class="mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-24">
+        <div class="text-center">
+            <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Collection') }}</p>
+            <h1 class="mt-4 font-serif text-4xl font-light lg:text-6xl">{{ $category->name }}</h1>
+            <p class="mt-4 text-sm text-cocoa/70">{{ trans_choice('{0} :count pieces|{1} :count piece|[2,*] :count pieces', $products->total()) }}</p>
+        </div>
+
+        @if ($products->isEmpty())
+            <div class="mt-16 text-center">
+                <p class="text-cocoa/80">{{ __('No products in this category yet.') }}</p>
+                <a href="{{ route('home') }}" class="mt-8 inline-block border-b border-cocoa pb-1 text-xs uppercase tracking-[0.3em]">{{ __('Back to home') }}</a>
+            </div>
+        @else
+            <div class="mt-16 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
+                @foreach ($products as $product)
+                    <x-product-card :product="$product" />
+                @endforeach
+            </div>
+
+            @if ($products->hasPages())
+                <nav class="mt-20 flex items-center justify-center gap-10 text-xs uppercase tracking-[0.25em]" aria-label="{{ __('Pagination') }}">
+                    @if ($products->onFirstPage())
+                        <span class="text-cocoa/30">{{ __('Previous') }}</span>
+                    @else
+                        <a href="{{ $products->previousPageUrl() }}" class="border-b border-cocoa pb-0.5">{{ __('Previous') }}</a>
+                    @endif
+
+                    <span class="text-cocoa/70">{{ $products->currentPage() }} / {{ $products->lastPage() }}</span>
+
+                    @if ($products->hasMorePages())
+                        <a href="{{ $products->nextPageUrl() }}" class="border-b border-cocoa pb-0.5">{{ __('Next') }}</a>
+                    @else
+                        <span class="text-cocoa/30">{{ __('Next') }}</span>
+                    @endif
+                </nav>
+            @endif
+        @endif
+    </section>
+</x-store-layout>

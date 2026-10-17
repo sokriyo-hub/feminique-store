@@ -4,6 +4,82 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+
+    --color-ivory: #E7D9C4;
+    --color-beige: #D8C2A6;
+    --color-sand: #C6A889;
+    --color-taupe: #A58263;
+    --color-mocha: #7A5A42;
+    --color-cocoa: #4E3727;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html {
+            scroll-behavior: auto;
+        }
+    }
+
+    body {
+        background-color: var(--color-ivory);
+        color: var(--color-cocoa);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    ::selection {
+        background: var(--color-sand);
+        color: var(--color-cocoa);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-mocha);
+        outline-offset: 3px;
+    }
+}
+
+/* Admin-এর রিচ টেক্সট (policy পেজ) সুন্দর দেখানোর জন্য */
+.rich-content {
+    line-height: 1.85;
+    font-size: 1.0625rem;
+}
+
+.rich-content > * + * {
+    margin-top: 1.25rem;
+}
+
+.rich-content h1,
+.rich-content h2,
+.rich-content h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+.rich-content h1 { font-size: 2.25rem; }
+.rich-content h2 { font-size: 1.875rem; margin-top: 2.5rem; }
+.rich-content h3 { font-size: 1.5rem; margin-top: 2rem; }
+
+.rich-content ul { list-style: disc; padding-left: 1.5rem; }
+.rich-content ol { list-style: decimal; padding-left: 1.5rem; }
+
+.rich-content a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.rich-content blockquote {
+    border-left: 1px solid var(--color-taupe);
+    padding-left: 1.25rem;
+    font-style: italic;
 }
