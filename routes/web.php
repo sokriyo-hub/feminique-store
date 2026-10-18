@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,3 +28,27 @@ Route::get('/wishlist', [StoreController::class, 'wishlist'])->name('wishlist');
 Route::get('/wishlist/items', [StoreController::class, 'wishlistItems'])
     ->middleware('throttle:60,1')
     ->name('wishlist.items');
+
+Route::get('/cart', [CartController::class, 'show'])->name('cart');
+
+Route::post('/cart/add', [CartController::class, 'add'])
+    ->middleware('throttle:60,1')
+    ->name('cart.add');
+
+Route::post('/cart/{product}/update', [CartController::class, 'update'])
+    ->whereNumber('product')
+    ->middleware('throttle:60,1')
+    ->name('cart.update');
+
+Route::post('/cart/{product}/remove', [CartController::class, 'remove'])
+    ->whereNumber('product')
+    ->middleware('throttle:60,1')
+    ->name('cart.remove');
+
+Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
+
+Route::post('/checkout', [CheckoutController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('checkout.store');
+
+Route::get('/order-placed', [CheckoutController::class, 'placed'])->name('order.placed');

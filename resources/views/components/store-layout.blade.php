@@ -49,7 +49,7 @@
                class="-mr-[0.35em] font-serif font-medium uppercase tracking-[0.35em] text-cocoa transition-all duration-500"
                :class="scrolled ? 'text-2xl' : 'text-3xl lg:text-4xl'">Feminique</a>
 
-            {{-- Right side: Search and Wishlist; Cart icon will be added here in S7 --}}
+            {{-- Right side: Search, Wishlist and Cart --}}
             <div class="flex items-center justify-end gap-5">
                 <button type="button" class="p-1 text-cocoa transition-colors hover:text-mocha"
                         @click="searching = !searching; open = false; if (searching) $nextTick(() => $refs.q.focus())"
@@ -66,6 +66,17 @@
                     </svg>
                     <span x-show="$store.wishlist.count > 0" x-cloak x-text="$store.wishlist.count"
                           class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[10px] leading-none text-ivory"></span>
+                </a>
+
+                <a href="{{ route('cart') }}" class="relative p-1 text-cocoa transition-colors hover:text-mocha" aria-label="{{ __('Cart') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2.5 3.5h2.2l2.3 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L20.5 7.5H5.6"/>
+                        <circle cx="9.5" cy="20" r="1.2"/>
+                        <circle cx="17" cy="20" r="1.2"/>
+                    </svg>
+                    @if ($cartCount > 0)
+                        <span class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[10px] leading-none text-ivory">{{ $cartCount }}</span>
+                    @endif
                 </a>
             </div>
         </div>
@@ -115,6 +126,17 @@
             </form>
         </div>
     </header>
+
+    {{-- "Added to cart" message --}}
+    @if (session('cart_notice'))
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 4000)" x-show="show" x-transition.opacity.duration.500ms
+             class="fixed inset-x-0 top-24 z-50 flex justify-center px-4" role="status">
+            <div class="flex items-center gap-6 border border-cocoa bg-cocoa px-6 py-4 text-sm text-ivory shadow-lg">
+                <span>{{ session('cart_notice') }}</span>
+                <a href="{{ route('cart') }}" class="border-b border-ivory/60 pb-0.5 text-xs uppercase tracking-[0.25em] transition-colors hover:border-ivory">{{ __('View cart') }}</a>
+            </div>
+        </div>
+    @endif
 
     @if ($back)
         <div class="wrap pt-8 lg:pt-10">

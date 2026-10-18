@@ -84,20 +84,47 @@
                     @endif
                 </div>
 
-                {{-- Actions (Add to cart and Buy now will be added to this row in S7) --}}
-                <div class="mt-8 flex flex-wrap gap-3">
-                    <button type="button" x-data
-                            @click="$store.wishlist.toggle({{ $product->id }})"
-                            :aria-pressed="$store.wishlist.has({{ $product->id }})"
-                            class="inline-flex items-center gap-3 border border-cocoa/40 px-8 py-4 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"
-                             :fill="$store.wishlist.has({{ $product->id }}) ? 'currentColor' : 'none'">
-                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                        </svg>
-                        <span x-show="!$store.wishlist.has({{ $product->id }})">{{ __('Add to wishlist') }}</span>
-                        <span x-show="$store.wishlist.has({{ $product->id }})" x-cloak>{{ __('Saved to wishlist') }}</span>
-                    </button>
-                </div>
+                {{-- Quantity + Buy now / Add to cart / Wishlist --}}
+                <form method="POST" action="{{ route('cart.add') }}" class="mt-8" x-data="{ q: 1 }">
+                    @csrf
+                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                    <input type="hidden" name="quantity" :value="q">
+
+                    <div class="flex items-center gap-5">
+                        <span class="text-xs uppercase tracking-[0.25em] text-cocoa/70">{{ __('Quantity') }}</span>
+                        <div class="inline-flex items-center border border-cocoa/40">
+                            <button type="button" aria-label="{{ __('Decrease quantity') }}" @click="if (q > 1) q--" :disabled="q <= 1"
+                                    class="flex h-11 w-11 items-center justify-center text-cocoa transition-colors hover:bg-cocoa hover:text-ivory disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-cocoa">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><path d="M5 12h14"/></svg>
+                            </button>
+                            <span x-text="q" class="w-12 text-center text-sm text-cocoa"></span>
+                            <button type="button" aria-label="{{ __('Increase quantity') }}" @click="if (q < {{ \App\Support\Cart::MAX_QTY }}) q++" :disabled="q >= {{ \App\Support\Cart::MAX_QTY }}"
+                                    class="flex h-11 w-11 items-center justify-center text-cocoa transition-colors hover:bg-cocoa hover:text-ivory disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-cocoa">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex flex-wrap gap-3">
+                        <button type="submit" name="buy_now" value="1"
+                                class="border border-cocoa bg-cocoa px-8 py-4 text-xs font-medium uppercase tracking-[0.25em] text-ivory transition duration-500 hover:bg-transparent hover:text-cocoa">{{ __('Buy now') }}</button>
+
+                        <button type="submit"
+                                class="border border-cocoa/40 bg-transparent px-8 py-4 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">{{ __('Add to cart') }}</button>
+
+                        <button type="button" x-data
+                                @click="$store.wishlist.toggle({{ $product->id }})"
+                                :aria-pressed="$store.wishlist.has({{ $product->id }})"
+                                class="inline-flex items-center gap-3 border border-cocoa/40 px-8 py-4 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"
+                                 :fill="$store.wishlist.has({{ $product->id }}) ? 'currentColor' : 'none'">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                            </svg>
+                            <span x-show="!$store.wishlist.has({{ $product->id }})">{{ __('Add to wishlist') }}</span>
+                            <span x-show="$store.wishlist.has({{ $product->id }})" x-cloak>{{ __('Saved to wishlist') }}</span>
+                        </button>
+                    </div>
+                </form>
 
                 @if ($product->description)
                     <div class="mt-10 border-t border-taupe/30 pt-10">
