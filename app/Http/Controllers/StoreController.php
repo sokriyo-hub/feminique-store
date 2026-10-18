@@ -14,6 +14,7 @@ class StoreController
     public function home(): View
     {
         return view('home', [
+            'hero' => Setting::heroContent(),
             'heroPaths' => Setting::heroImages(),
             'categories' => Category::withCount('products')->orderBy('sort_order')->orderBy('name')->get(),
             'newArrivals' => Product::with('images')->latest()->orderByDesc('id')->take(8)->get(),

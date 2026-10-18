@@ -24,9 +24,9 @@ class StoreSeeder extends Seeder
         ];
 
         foreach ($categories as $i => $c) {
-            Category::updateOrCreate(
+                       Category::updateOrCreate(
                 ['slug' => $c['slug']],
-                ['name' => $c['name'], 'sort_order' => $i + 1]
+                ['name' => $c['name'], 'sort_order' => $i + 1, 'show_in_navbar' => true]
             );
         }
 

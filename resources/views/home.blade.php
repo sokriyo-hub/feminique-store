@@ -2,11 +2,11 @@
     $slides = array_map(fn ($path) => asset('storage/' . $path), $heroPaths);
     $arrowButton = 'flex h-11 w-11 items-center justify-center border transition-colors duration-300 disabled:cursor-default disabled:opacity-30';
 @endphp
-<x-store-layout :description="__('Elegant jewellery and accessories for women.')">
+<x-store-layout :description="__('Elegant jewellery and accessories for women.')" :overlay="true">
 
-    {{-- Hero --}}
+    {{-- Hero (slides up under the see-through menu) --}}
     @if (count($slides))
-        <section class="relative h-[78vh] min-h-[460px] w-full touch-pan-y select-none overflow-hidden bg-beige"
+        <section class="relative -mt-20 h-[88vh] min-h-[560px] w-full touch-pan-y select-none overflow-hidden bg-beige lg:-mt-24"
                  x-data="heroSlider({{ count($slides) }})"
                  @pointerdown="down($event)"
                  @pointermove.window="move($event)"
@@ -27,20 +27,19 @@
                 @endforeach
             </div>
 
-            <div class="pointer-events-none absolute inset-0 bg-cocoa/25"></div>
+            {{-- Soft light veil so the dark text stays readable --}}
+            <div class="pointer-events-none absolute inset-0 bg-linear-to-t from-ivory/75 via-ivory/35 to-transparent lg:bg-linear-to-r lg:from-ivory/75 lg:via-ivory/25 lg:to-transparent"></div>
 
-            {{-- Shop Now (bottom-left) --}}
-            <div class="wrap absolute inset-x-0 bottom-14 lg:bottom-16">
-                    <a href="#collections" draggable="false" class="inline-block border border-ivory bg-ivory px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-cocoa transition duration-500 hover:bg-transparent hover:text-ivory">{{ __('Shop Now') }}</a>            </div>
+            <x-hero-content :hero="$hero" />
 
             {{-- Line indicators (bottom centre) --}}
             @if (count($slides) > 1)
                 <div class="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2 lg:bottom-6" @pointerdown.stop>
                     <template x-for="k in n" :key="k">
                         <button type="button" @click="go(k - 1)" :aria-label="'Slide ' + k" class="flex h-8 items-center">
-                            <span class="relative block h-[2px] overflow-hidden bg-ivory/40 transition-all duration-500"
+                            <span class="relative block h-[2px] overflow-hidden bg-cocoa/25 transition-all duration-500"
                                   :class="i === k - 1 ? 'w-16' : 'w-8'">
-                                <span class="absolute inset-y-0 left-0 block bg-ivory transition-[width] duration-100 ease-linear"
+                                <span class="absolute inset-y-0 left-0 block bg-cocoa transition-[width] duration-100 ease-linear"
                                       :style="{ width: (i === k - 1 ? progress : 0) + '%' }"></span>
                             </span>
                         </button>
@@ -49,10 +48,8 @@
             @endif
         </section>
     @else
-        <section class="relative flex h-[60vh] min-h-[380px] w-full items-center justify-center bg-beige px-6 text-center">
-            <p class="font-serif text-5xl font-light uppercase tracking-[0.3em] text-cocoa lg:text-7xl">Feminique</p>
-            <div class="wrap absolute inset-x-0 bottom-14 text-left lg:bottom-16">
-<a href="#collections" class="inline-block border border-cocoa bg-cocoa px-10 py-4 text-xs font-medium uppercase tracking-[0.3em] text-ivory transition duration-500 hover:bg-transparent hover:text-cocoa">{{ __('Shop Now') }}</a>            </div>
+        <section class="relative -mt-20 h-[80vh] min-h-[520px] w-full overflow-hidden bg-beige lg:-mt-24">
+            <x-hero-content :hero="$hero" />
         </section>
     @endif
 

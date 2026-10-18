@@ -55,7 +55,10 @@ class ManageSettings extends Page
 
     public function mount(): void
     {
-        $values = ['hero_images' => Setting::heroImages()];
+        $values = [
+            'hero_images' => Setting::heroImages(),
+            'site_logo' => Setting::get('site_logo'),
+        ];
 
         foreach (self::TEXT_KEYS as $key) {
             $values[$key] = Setting::get($key);
@@ -66,6 +69,10 @@ class ManageSettings extends Page
             ? Setting::get('top_strip_text')
             : self::DEFAULT_TOP_STRIP;
 
+        foreach (array_keys(Setting::HERO_DEFAULTS) as $key) {
+            $values[$key] = Setting::valueOrDefault($key);
+        }
+
         $this->form->fill($values);
     }
 
@@ -74,6 +81,25 @@ class ManageSettings extends Page
         return $schema
             ->components([
                 Form::make([
+                    Section::make('Logo')
+                        ->schema([
+                            FileUpload::make('site_logo')
+                                ->label('Brand logo')
+                                ->disk('public')
+                                ->directory('branding')
+                                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                ->maxSize(2048)
+                                ->saveUploadedFileUsing(
+                                    fn (TemporaryUploadedFile $file): string => ImageProcessor::storeAsWebp(
+                                        $file->getRealPath(),
+                                        'branding',
+                                        errorField: 'data.site_logo',
+                                        maxSide: 1200,
+                                        quality: 90,
+                                    )
+                                )
+                                ->helperText('Shown at the left of the menu. Use a PNG with a transparent background, wide (horizontal) logo works best, max 2 MB. If empty, the text "Feminique" is shown.'),
+                        ]),
                     Section::make('Homepage hero images')
                         ->schema([
                             FileUpload::make('hero_images')
@@ -96,7 +122,33 @@ class ManageSettings extends Page
                                         quality: ImageProcessor::HERO_QUALITY,
                                     )
                                 )
-                                ->helperText('Up to 5 images, JPG, PNG or WebP, max 4 MB each. Use wide (landscape) high-quality images, at least 1600 px wide. One image = fixed hero. More than one = automatic slider (drag to change the order).'),
+                                ->helperText('Up to 5 images, JPG, PNG or WebP, max 4 MB each. Use wide (landscape), LIGHT-coloured, high-quality images, at least 1600 px wide, with free space on the left side for the text. One image = fixed hero. More than one = automatic slider (drag to change the order).'),
+                        ]),
+                    Section::make('Homepage hero text')
+                        ->description('Shown on top of the hero images. Leave a field empty to hide it.')
+                        ->schema([
+                            TextInput::make('hero_eyebrow')
+                                ->label('Small line above the heading')
+                                ->maxLength(80),
+                            Textarea::make('hero_title')
+                                ->label('Heading')
+                                ->rows(2)
+                                ->maxLength(80)
+                                ->helperText('Press Enter to start a new line.'),
+                            Textarea::make('hero_text')
+                                ->label('Short description')
+                                ->rows(3)
+                                ->maxLength(200)
+                                ->helperText('Press Enter to start a new line.'),
+                            TextInput::make('hero_badge_1')
+                                ->label('Badge 1 (diamond icon)')
+                                ->maxLength(40),
+                            TextInput::make('hero_badge_2')
+                                ->label('Badge 2 (truck icon)')
+                                ->maxLength(40),
+                            TextInput::make('hero_badge_3')
+                                ->label('Badge 3 (heart icon)')
+                                ->maxLength(40),
                         ]),
                     Section::make('Top announcement bar')
                         ->schema([
@@ -154,10 +206,10 @@ class ManageSettings extends Page
     {
         $data = $this->form->getState();
 
+        // Hero images removed from the list are deleted from disk
         $new = array_values(array_filter((array) ($data['hero_images'] ?? []), 'is_string'));
         $old = Setting::heroImages();
 
-        // Hero images removed from the list are deleted from disk
         foreach (array_diff($old, $new) as $removed) {
             Storage::disk('public')->delete($removed);
         }
@@ -165,7 +217,22 @@ class ManageSettings extends Page
         Setting::put('hero_images', $new ? json_encode($new, JSON_UNESCAPED_SLASHES) : null);
         Setting::put('hero_image', $new[0] ?? null);
 
-        foreach (self::TEXT_KEYS as $key) {
+        // Logo: a replaced or removed logo is deleted from disk
+        $logo = $data['site_logo'] ?? null;
+
+        if (is_array($logo)) {
+            $logo = array_values($logo)[0] ?? null;
+        }
+
+        $oldLogo = Setting::get('site_logo');
+
+        if ($oldLogo && $oldLogo !== $logo) {
+            Storage::disk('public')->delete($oldLogo);
+        }
+
+        Setting::put('site_logo', is_string($logo) && $logo !== '' ? $logo : null);
+
+        foreach (array_merge(self::TEXT_KEYS, array_keys(Setting::HERO_DEFAULTS)) as $key) {
             $value = $data[$key] ?? null;
             Setting::put($key, filled($value) ? trim((string) $value) : null);
         }

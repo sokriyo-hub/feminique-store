@@ -6,6 +6,7 @@ use App\Models\Category;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -26,6 +27,9 @@ class CategoriesTable
                     ->searchable(),
                 TextColumn::make('slug')
                     ->searchable(),
+                IconColumn::make('show_in_navbar')
+                    ->label('In navbar')
+                    ->boolean(),
                 TextColumn::make('products_count')
                     ->counts('products')
                     ->label('Products'),

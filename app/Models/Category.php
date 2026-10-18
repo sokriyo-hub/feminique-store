@@ -8,7 +8,14 @@ use Illuminate\Support\Facades\Storage;
 
 class Category extends Model
 {
-    protected $fillable = ['name', 'slug', 'image', 'sort_order'];
+    protected $fillable = ['name', 'slug', 'image', 'sort_order', 'show_in_navbar'];
+
+    protected function casts(): array
+    {
+        return [
+            'show_in_navbar' => 'boolean',
+        ];
+    }
 
     protected static function booted(): void
     {
