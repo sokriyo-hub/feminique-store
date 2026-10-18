@@ -1,5 +1,5 @@
 <x-store-layout :title="$category->name" :back="true" :back-url="route('home')">
-    <section class="wrap py-12 lg:py-20">
+    <section class="wrap pb-12 pt-4 lg:pb-20 lg:pt-8">
         <div class="text-center" data-reveal>
             <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Collection') }}</p>
             <h1 class="mt-4 font-serif text-4xl font-light lg:text-6xl">{{ $category->name }}</h1>

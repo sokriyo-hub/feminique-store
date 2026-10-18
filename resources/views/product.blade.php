@@ -7,7 +7,7 @@
                 :description="\Illuminate\Support\Str::limit(strip_tags((string) $product->description), 150)"
                 :back="true"
                 :back-url="route('category.show', $product->category->slug)">
-    <article class="wrap py-10 lg:py-14">
+    <article class="wrap pb-10 pt-3 lg:pb-14 lg:pt-5">
 
         <nav class="text-xs uppercase tracking-[0.25em] text-cocoa/70" aria-label="Breadcrumb" data-reveal>
             <a href="{{ route('home') }}" class="transition-colors hover:text-cocoa">{{ __('Home') }}</a>

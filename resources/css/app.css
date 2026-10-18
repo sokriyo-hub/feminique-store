@@ -172,3 +172,17 @@
     padding-left: 1.25rem;
     font-style: italic;
 }
+
+/* Print / Save as PDF: show only the page content (receipt) */
+@media print {
+    body > div,
+    body > header,
+    body > footer,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+}

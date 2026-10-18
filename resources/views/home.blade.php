@@ -4,9 +4,9 @@
 @endphp
 <x-store-layout :description="__('Elegant jewellery and accessories for women.')" :overlay="true">
 
-    {{-- Hero (slides up under the see-through menu) --}}
+    {{-- Hero (starts right under the strip; the header floats on top of it) --}}
     @if (count($slides))
-        <section class="relative -mt-20 h-[88vh] min-h-[560px] w-full touch-pan-y select-none overflow-hidden bg-beige lg:-mt-24"
+        <section class="relative h-[88vh] min-h-[560px] w-full touch-pan-y select-none overflow-hidden bg-beige"
                  x-data="heroSlider({{ count($slides) }})"
                  @pointerdown="down($event)"
                  @pointermove.window="move($event)"
@@ -48,7 +48,7 @@
             @endif
         </section>
     @else
-        <section class="relative -mt-20 h-[80vh] min-h-[520px] w-full overflow-hidden bg-beige lg:-mt-24">
+        <section class="relative h-[80vh] min-h-[520px] w-full overflow-hidden bg-beige">
             <x-hero-content :hero="$hero" />
         </section>
     @endif

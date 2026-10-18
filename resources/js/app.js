@@ -6,6 +6,7 @@ import '@fontsource/cormorant-garamond/400-italic.css';
 
 import Alpine from 'alpinejs';
 import './wishlist';
+import './receipt';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;

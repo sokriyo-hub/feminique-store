@@ -1,6 +1,6 @@
 @use('App\Support\Money')
 <x-store-layout :title="__('Cart')" :back="true" :back-url="route('home')">
-    <section class="wrap py-10 lg:py-14">
+        <section class="wrap pb-10 pt-3 lg:pb-14 lg:pt-5">
 
         <div class="text-center" data-reveal>
             <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Your selection') }}</p>
