@@ -3,6 +3,7 @@
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StoreController::class, 'home'])->name('home');
@@ -52,3 +53,9 @@ Route::post('/checkout', [CheckoutController::class, 'store'])
     ->name('checkout.store');
 
 Route::get('/order-placed', [CheckoutController::class, 'placed'])->name('order.placed');
+
+Route::get('/track', [TrackingController::class, 'form'])->name('track');
+
+Route::post('/track', [TrackingController::class, 'lookup'])
+    ->middleware('throttle:30,1')
+    ->name('track.lookup');

@@ -177,17 +177,15 @@
                     @endif
                 </div>
             </div>
-
-            @if ($policyPages->isNotEmpty())
-                <div>
-                    <h2 class="text-xs uppercase tracking-[0.3em] text-ivory/60">{{ __('Information') }}</h2>
-                    <ul class="mt-5 space-y-3 text-sm text-ivory/85">
-                        @foreach ($policyPages as $policyPage)
-                            <li><a href="{{ route('page.show', $policyPage->slug) }}" class="transition-colors hover:text-ivory">{{ $policyPage->title }}</a></li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            <div>
+                <h2 class="text-xs uppercase tracking-[0.3em] text-ivory/60">{{ __('Information') }}</h2>
+                <ul class="mt-5 space-y-3 text-sm text-ivory/85">
+                    <li><a href="{{ route('track') }}" class="transition-colors hover:text-ivory">{{ __('Track your order') }}</a></li>
+                    @foreach ($policyPages as $policyPage)
+                        <li><a href="{{ route('page.show', $policyPage->slug) }}" class="transition-colors hover:text-ivory">{{ $policyPage->title }}</a></li>
+                    @endforeach
+                </ul>
+            </div>            
         </div>
 
         <div class="border-t border-ivory/15 px-6 py-6 text-center text-xs tracking-wide text-ivory/60">

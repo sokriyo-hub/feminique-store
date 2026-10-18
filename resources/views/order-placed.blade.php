@@ -11,7 +11,7 @@
         <div class="mt-12 border border-taupe/50 px-6 py-8 text-center" data-reveal style="--d: 100ms">
             <p class="text-xs uppercase tracking-[0.3em] text-cocoa/70">{{ __('Order code') }}</p>
             <p class="mt-3 select-all font-serif text-4xl tracking-[0.15em] text-cocoa lg:text-5xl">{{ $order->code }}</p>
-            <p class="mt-4 text-sm leading-relaxed text-cocoa/70">{{ __('Keep this code. Together with your mobile number, it lets you track your order.') }}</p>
+            <a href="{{ route('track') }}" class="nav-link mt-5 inline-block text-xs uppercase tracking-[0.25em] text-cocoa/80 transition-colors hover:text-cocoa">{{ __('Track your order') }}</a>
         </div>
 
         <div class="mt-12 grid gap-10 sm:grid-cols-2" data-reveal style="--d: 150ms">
