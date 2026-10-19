@@ -15,21 +15,32 @@
     --color-cocoa: #4E3727;
 }
 
-/* সাইটের চওড়া কনটেন্ট-বক্স (বড় স্ক্রিনে পাশে বড় ফাঁকা জায়গা থাকে না) */
+/* সাইটের চওড়া কনটেন্ট-বক্স। rem-এ রাখা হয়েছে, তাই বড় স্ক্রিনে আনুপাতিক হারে বাড়ে */
 @utility wrap {
     width: 100%;
-    max-width: 1920px;
+    max-width: 120rem;
     margin-inline: auto;
     padding-inline: clamp(1.25rem, 4vw, 4.5rem);
 }
 
 @layer base {
+    /*
+     * খুব চওড়া স্ক্রিনে (বা browser zoom-out করলে) পুরো site আনুপাতিক হারে বড় হয়,
+     * তাই মাঝখানে ছোট হয়ে জমে থাকে না। 1920px পর্যন্ত কিছুই বদলায় না।
+     * সংখ্যা বদলাতে চাইলে: 1920px (কোথা থেকে শুরু) ও 120 (বড় হওয়ার হার)।
+     */
+    @media (min-width: 1920px) {
+        html {
+            font-size: calc(100vw / 120);
+        }
+    }
+
     html {
         scroll-behavior: smooth;
     }
 
     body {
-        background-color: var(--color-ivory);
+        background-color: var(--color-white);
         color: var(--color-cocoa);
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;

@@ -27,14 +27,15 @@
 </head>
 <body class="flex min-h-screen flex-col">
 
-    {{-- Top strip: normal block, scrolls away with the page (empty text = hidden) --}}
+    {{-- Top strip (text editable in admin Settings; empty = hidden) --}}
     @if ($topStrip !== '')
-        <div class="bg-cocoa py-2 text-center text-[11px] uppercase tracking-[0.3em] text-ivory/90">
+        <div class="bg-cocoa py-2 text-center text-[0.6875rem] uppercase tracking-[0.3em] text-ivory/90">
             {{ $topStrip }}
         </div>
     @endif
 
-    {{-- Header: takes NO space (h-0). The inner 80px box floats over the page and sticks to the top. --}}
+    {{-- Header: takes NO space (h-0). The inner box floats over the page and sticks to the top.
+         See-through at the top of every page, round glass pill after scrolling. --}}
     <header x-data="{ open: false, scrolled: false, searching: false }"
             x-init="scrolled = window.scrollY > 24"
             @scroll.window.passive="scrolled = window.scrollY > 24"
@@ -42,14 +43,14 @@
 
         <div class="relative h-20">
 
-            {{-- Glass pill: fades in after scrolling --}}
+            {{-- Round glass pill: fades in after scrolling --}}
             <div class="pointer-events-none absolute inset-x-3 inset-y-2 rounded-full transition-opacity duration-500 lg:inset-x-6 {{ $floatBox }}"
                  :class="(scrolled || open || searching) ? 'opacity-100' : 'opacity-0'"></div>
 
-            <div class="wrap relative grid h-full grid-cols-[1fr_auto_1fr] items-center lg:grid-cols-[auto_1fr_auto] lg:gap-10">
+            <div class="wrap relative grid h-full grid-cols-[1fr_auto_1fr] items-center xl:grid-cols-[auto_1fr_auto] xl:gap-8">
 
-                {{-- Mobile menu button --}}
-                <div class="lg:hidden">
+                {{-- Menu button (phones, tablets, small laptops) --}}
+                <div class="xl:hidden">
                     <button type="button" class="-ml-1 p-1 text-cocoa" @click="open = !open; searching = false" :aria-expanded="open" aria-label="{{ __('Menu') }}">
                         <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" d="M4 8h16M4 16h16"/></svg>
                         <svg x-show="open" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
@@ -57,33 +58,33 @@
                 </div>
 
                 {{-- Logo (image from Settings, or text) --}}
-                <a href="{{ route('home') }}" class="justify-self-center lg:justify-self-start" aria-label="Feminique">
+                <a href="{{ route('home') }}" class="justify-self-center xl:justify-self-start" aria-label="Feminique">
                     @if ($logo !== '')
                         <img src="{{ asset('storage/' . $logo) }}" alt="Feminique" class="h-8 w-auto max-w-[11rem] object-contain lg:h-11 lg:max-w-[15rem]">
                     @else
-                        <span class="-mr-[0.3em] font-serif text-xl font-medium uppercase tracking-[0.3em] text-cocoa sm:text-2xl lg:mr-0 lg:text-3xl lg:tracking-[0.35em]">Feminique</span>
+                        <span class="-mr-[0.3em] font-serif text-xl font-medium uppercase tracking-[0.3em] text-cocoa sm:text-2xl xl:mr-0 xl:text-3xl xl:tracking-[0.35em]">Feminique</span>
                     @endif
                 </a>
 
                 {{-- Desktop menu: only the categories chosen in admin --}}
                 @if ($navCategories->isNotEmpty())
-                    <nav class="hidden lg:block" aria-label="{{ __('Categories') }}">
-                        <ul class="flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
+                    <nav class="hidden min-w-0 xl:block" aria-label="{{ __('Categories') }}">
+                        <ul class="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 2xl:gap-x-10">
                             @foreach ($navCategories as $category)
                                 <li>
                                     <a href="{{ route('category.show', $category->slug) }}"
-                                       class="nav-link text-[15px] font-medium tracking-wide text-cocoa"
+                                       class="nav-link text-[0.9375rem] font-medium tracking-wide text-cocoa"
                                        @if (request()->is('category/' . $category->slug)) aria-current="page" @endif>{{ $category->name }}</a>
                                 </li>
                             @endforeach
                         </ul>
                     </nav>
                 @else
-                    <div class="hidden lg:block"></div>
+                    <div class="hidden xl:block"></div>
                 @endif
 
                 {{-- Right side: Search, Wishlist, Cart, Track order --}}
-                <div class="flex items-center justify-end gap-4 lg:gap-6">
+                <div class="flex items-center justify-end gap-4 xl:gap-6">
                     <button type="button" class="{{ $iconBtn }}"
                             @click="searching = !searching; open = false; if (searching) $nextTick(() => $refs.q.focus())"
                             :aria-expanded="searching" aria-label="{{ __('Search') }}">
@@ -98,7 +99,7 @@
                             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                         </svg>
                         <span x-show="$store.wishlist.count > 0" x-cloak x-text="$store.wishlist.count"
-                              class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[10px] leading-none text-ivory"></span>
+                              class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[0.625rem] leading-none text-ivory"></span>
                     </a>
 
                     <a href="{{ route('cart') }}" class="{{ $iconBtn }}" aria-label="{{ __('Cart') }}">
@@ -108,11 +109,11 @@
                             <circle cx="17" cy="20" r="1.2"/>
                         </svg>
                         @if ($cartCount > 0)
-                            <span class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[10px] leading-none text-ivory">{{ $cartCount }}</span>
+                            <span class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-cocoa px-1 text-[0.625rem] leading-none text-ivory">{{ $cartCount }}</span>
                         @endif
                     </a>
 
-                    {{-- Track order (on phones it lives in the menu) --}}
+                    {{-- Track order (on small phones it lives in the menu) --}}
                     <a href="{{ route('track') }}" class="{{ $iconBtn }} hidden sm:block" aria-label="{{ __('Track order') }}" title="{{ __('Track order') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/>
@@ -123,9 +124,9 @@
                 </div>
             </div>
 
-            {{-- Mobile menu: all categories + Track order (floats under the pill) --}}
+            {{-- Menu panel: all categories + Track order (floats under the pill) --}}
             <nav x-show="open" x-cloak x-transition.opacity.duration.300ms
-                 class="{{ $dropBox }} lg:hidden"
+                 class="{{ $dropBox }} max-h-[calc(100svh-6rem)] overflow-y-auto xl:hidden"
                  aria-label="{{ __('Categories') }}">
                 <ul class="px-6 py-2 text-sm uppercase tracking-[0.2em]">
                     @foreach ($categories as $category)

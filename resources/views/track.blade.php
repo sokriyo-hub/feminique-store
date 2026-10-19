@@ -76,7 +76,7 @@
                                 @endif
 
                                 <span class="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full sm:h-20 sm:w-20
-                                    {{ $done ? 'bg-beige text-cocoa' : ($active ? 'bg-beige text-cocoa ring-2 ring-cocoa ring-offset-2 ring-offset-ivory' : 'border-2 border-taupe/40 bg-ivory text-cocoa/30') }}">
+                                    {{ $done ? 'bg-beige text-cocoa' : ($active ? 'bg-beige text-cocoa ring-2 ring-cocoa ring-offset-2 ring-offset-white' : 'border-2 border-taupe/40 bg-white text-cocoa/30') }}">
 
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-9 sm:w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         @switch($step)

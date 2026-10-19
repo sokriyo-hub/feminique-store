@@ -18,7 +18,7 @@
         <div class="mt-8 grid gap-10 lg:grid-cols-[minmax(20rem,calc(62vh*0.8))_minmax(0,1fr)] lg:gap-16 xl:gap-24">
 
             {{-- Gallery --}}
-            <div class="mx-auto w-full max-w-[calc(62vh*0.8)] lg:mx-0 lg:max-w-none"
+            <div class="mx-auto w-full max-w-[max(20rem,calc(62svh*0.8))] lg:mx-0 lg:max-w-none"
                  x-data="productGallery({{ count($imageUrls) }})"
                  @keydown.window.arrow-left="prev()"
                  @keydown.window.arrow-right="next()"
