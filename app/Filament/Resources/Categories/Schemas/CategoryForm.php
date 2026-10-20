@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\Categories\Schemas;
 
 use App\Models\Category;
+use App\Support\CategoryTree;
 use App\Support\ImageProcessor;
 use Closure;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
@@ -35,7 +38,33 @@ class CategoryForm
                     ->maxLength(255)
                     ->alphaDash()
                     ->unique(ignoreRecord: true)
-                    ->helperText('English letters, numbers and dashes only. It is used in the web link.'),
+                    ->helperText('English letters, numbers and dashes only. It is used in the web link. Every category (even a sub-category) needs its own unique slug, for example "gold-rings".'),
+                Select::make('parent_id')
+                    ->label('Parent category (optional)')
+                    ->options(fn (?Category $record): array => CategoryTree::validParents($record?->id))
+                    // The "+" button in the category list opens this page as /create?parent=ID
+                    ->default(function (string $operation): ?int {
+                        if ($operation !== 'create') {
+                            return null;
+                        }
+
+                        $parent = request()->integer('parent');
+
+                        return $parent > 0 && array_key_exists($parent, CategoryTree::validParents(null)) ? $parent : null;
+                    })
+                    ->placeholder('None (this is a main category)')
+                    ->searchable()
+                    ->live()
+                    ->helperText('Leave empty for a main category. Choose a parent to make this a sub-category. Up to ' . Category::MAX_DEPTH . ' levels are allowed.')
+                    ->rule(fn (?Category $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($record): void {
+                        if (blank($value)) {
+                            return;
+                        }
+
+                        if (! array_key_exists((int) $value, CategoryTree::validParents($record?->id))) {
+                            $fail('This parent is not allowed. A category cannot be inside itself, and only ' . Category::MAX_DEPTH . ' levels are allowed.');
+                        }
+                    }),
                 FileUpload::make('image')
                     ->label('Category image (optional)')
                     ->disk('public')
@@ -54,13 +83,17 @@ class CategoryForm
                 Toggle::make('show_in_navbar')
                     ->label('Show in navbar')
                     ->default(false)
-                    ->helperText('Up to ' . self::NAVBAR_MAX . ' categories can show in the top menu. Every category always stays on the home page and in the mobile menu.')
+                    ->visible(fn (Get $get): bool => blank($get('parent_id')))
+                    ->dehydratedWhenHidden()
+                    ->dehydrateStateUsing(fn ($state, Get $get): bool => blank($get('parent_id')) ? (bool) $state : false)
+                    ->helperText('Only main categories can be in the top menu (up to ' . self::NAVBAR_MAX . '). Their sub-categories appear in a drop-down. Every main category always stays on the home page and in the mobile menu.')
                     ->rule(fn (?Category $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($record): void {
                         if (! $value) {
                             return;
                         }
 
                         $others = Category::where('show_in_navbar', true)
+                            ->whereNull('parent_id')
                             ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
                             ->count();
 
@@ -68,12 +101,14 @@ class CategoryForm
                             $fail('Only ' . self::NAVBAR_MAX . ' categories can show in the navbar. Turn one off first.');
                         }
                     }),
+                // Only main categories use sort_order. Sub-categories are always A-Z.
                 TextInput::make('sort_order')
                     ->required()
                     ->numeric()
                     ->minValue(0)
-                    ->default(0)
-                    ->helperText('Smaller number shows first. You can also drag rows in the list.'),
+                    ->default(fn (): int => ((int) Category::whereNull('parent_id')->max('sort_order')) + 1)
+                    ->visible(fn (Get $get): bool => blank($get('parent_id')))
+                    ->helperText('Smaller number shows first. Easier way: drag the main categories in the category list. Sub-categories are always shown A-Z.'),
             ]);
     }
 }

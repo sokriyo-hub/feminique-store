@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Models\ProductVariant;
+use App\Support\CategoryTree;
 use App\Support\ImageProcessor;
+use Closure;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -20,10 +23,10 @@ class ProductForm
             ->components([
                 Select::make('category_id')
                     ->label('Category')
-                    ->relationship('category', 'name')
+                    ->options(fn (): array => CategoryTree::pathOptions())
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->helperText('A product can be placed in any category or sub-category.'),
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255)
@@ -39,6 +42,18 @@ class ProductForm
                     ->alphaDash()
                     ->unique(ignoreRecord: true)
                     ->helperText('English letters, numbers and dashes only. It is used in the web link.'),
+                TextInput::make('sku')
+                    ->label('SKU / product code (optional)')
+                    ->maxLength(64)
+                    ->alphaDash()
+                    ->unique(ignoreRecord: true)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
+                    ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                        if (filled($value) && ProductVariant::where('sku', trim((string) $value))->exists()) {
+                            $fail('This code is already used by a variant of another product.');
+                        }
+                    })
+                    ->helperText('Your own code, for example FQ-R-001. Must be unique. Leave empty if you do not use codes.'),
                 Textarea::make('description')
                     ->rows(5)
                     ->maxLength(5000)
@@ -56,6 +71,15 @@ class ProductForm
                     ->lt('price')
                     ->prefix('Tk')
                     ->helperText('Leave empty if there is no discount. Discount % is calculated automatically.'),
+                TextInput::make('stock')
+                    ->label('Stock (pieces available)')
+                    ->required()
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->maxValue(1000000)
+                    ->default(0)
+                    ->helperText('Customers cannot order more than this. When it reaches 0 the product shows "Sold out".'),
                 FileUpload::make('image_paths')
                     ->label('Images')
                     ->multiple()

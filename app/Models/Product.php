@@ -9,8 +9,11 @@ use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
+    public const MAX_OPTIONS = 3;
+
     protected $fillable = [
-        'category_id', 'name', 'slug', 'description', 'price', 'discount_price',
+        'category_id', 'name', 'slug', 'sku', 'description', 'price', 'discount_price',
+        'has_variants', 'stock',
     ];
 
     protected static function booted(): void
@@ -28,6 +31,8 @@ class Product extends Model
         return [
             'price' => 'decimal:2',
             'discount_price' => 'decimal:2',
+            'has_variants' => 'boolean',
+            'stock' => 'integer',
         ];
     }
 
@@ -39,6 +44,16 @@ class Product extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    public function options(): HasMany
+    {
+        return $this->hasMany(ProductOption::class)->orderBy('sort_order');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order')->orderBy('id');
     }
 
     // ছবির ফাইল-পাথের তালিকা (ক্রম অনুযায়ী) দিলে product_images টেবিল মিলিয়ে দেয়
@@ -56,6 +71,21 @@ class Product extends Model
         foreach ($paths as $i => $path) {
             $this->images()->updateOrCreate(['path' => $path], ['sort_order' => $i + 1]);
         }
+    }
+
+    // মোট stock: variant থাকলে সব variant-এর যোগফল, না থাকলে product-এর নিজের stock
+    public function getTotalStockAttribute(): int
+    {
+        if ($this->has_variants) {
+            return (int) $this->variants()->sum('stock');
+        }
+
+        return (int) $this->stock;
+    }
+
+    public function getInStockAttribute(): bool
+    {
+        return $this->total_stock > 0;
     }
 
     // ডিসকাউন্ট আছে কিনা (discount_price থাকলে এবং price-এর চেয়ে কম হলে)

@@ -15,6 +15,7 @@ class Order extends Model
     protected $fillable = [
         'code', 'customer_name', 'phone', 'email', 'address',
         'delivery_zone_name', 'subtotal', 'delivery_charge', 'total', 'status',
+        'stock_deducted',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class Order extends Model
             'subtotal' => 'decimal:2',
             'delivery_charge' => 'decimal:2',
             'total' => 'decimal:2',
+            'stock_deducted' => 'boolean',
         ];
     }
 
