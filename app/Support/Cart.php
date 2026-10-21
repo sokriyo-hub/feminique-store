@@ -7,9 +7,6 @@ use Illuminate\Support\Collection;
 
 class Cart
 {
-    // TEMP: শুধু পুরনো view না ভাঙার জন্য। Step E2-তে মুছে যাবে। আসল সীমা = stock।
-    public const MAX_QTY = 10;
-
     // ভুল/অস্বাভাবিক সংখ্যা ঠেকানোর জন্য (stock-ই আসল সীমা)
     private const SANITY_MAX = 1000;
 

@@ -8,6 +8,7 @@ use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\Schemas\ProductForm;
 use App\Filament\Resources\Products\Tables\ProductsTable;
 use App\Models\Product;
+use App\Support\StockReport;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -21,6 +22,24 @@ class ProductResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    // বাঁ মেনুতে: কয়টা product low বা out of stock
+    public static function getNavigationBadge(): ?string
+    {
+        $count = StockReport::lowOrOutCount();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return StockReport::outCount() > 0 ? 'danger' : 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Products that are low or out of stock';
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Database\Seeder;
 
 // শুধু demo/টেস্টের জন্য। Production-এ চালাবেন না। সব তথ্য নকল।
+// Stock নিয়ম মানে: Cancelled ছাড়া সব order-এর stock কাটা হয় (stock_deducted = true)।
 class DemoOrderSeeder extends Seeder
 {
     public function run(): void
@@ -18,10 +19,10 @@ class DemoOrderSeeder extends Seeder
             return;
         }
 
-        $products = Product::orderBy('id')->get();
+        $products = Product::where('has_variants', false)->orderBy('id')->get();
 
         if ($products->count() < 4) {
-            $this->command?->warn('Not enough products. Run StoreSeeder first.');
+            $this->command?->warn('Not enough simple products. Run StoreSeeder first.');
 
             return;
         }
@@ -43,6 +44,7 @@ class DemoOrderSeeder extends Seeder
 
         foreach ($rows as $i => [$name, $phone, $address, $status, $daysAgo]) {
             $picked = $products->slice($i, 2 + ($i % 2));
+            $takesStock = $status !== 'cancelled';
 
             $order = Order::create([
                 'code' => Order::generateCode(),
@@ -55,6 +57,7 @@ class DemoOrderSeeder extends Seeder
                 'delivery_charge' => $charge,
                 'total' => 0,
                 'status' => $status,
+                'stock_deducted' => $takesStock,
             ]);
 
             $subtotal = 0;
@@ -73,6 +76,11 @@ class DemoOrderSeeder extends Seeder
                     'quantity' => $qty,
                     'line_total' => $line,
                 ]);
+
+                // Real orders take stock, so demo orders do too (never below 0)
+                if ($takesStock) {
+                    Product::whereKey($product->id)->decrement('stock', min($qty, (int) Product::whereKey($product->id)->value('stock')));
+                }
             }
 
             $order->forceFill([

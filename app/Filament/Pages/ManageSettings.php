@@ -48,10 +48,14 @@ class ManageSettings extends Page
         'facebook_url',
         'instagram_url',
         'free_delivery_threshold',
+        'low_stock_threshold',
     ];
 
     // Text shown in the top strip until the admin saves their own
     private const DEFAULT_TOP_STRIP = 'Cash on Delivery available';
+
+    // Low-stock limit used until the admin saves their own
+    private const DEFAULT_LOW_STOCK = '5';
 
     public function mount(): void
     {
@@ -68,6 +72,8 @@ class ManageSettings extends Page
         $values['top_strip_text'] = Setting::where('name', 'top_strip_text')->exists()
             ? Setting::get('top_strip_text')
             : self::DEFAULT_TOP_STRIP;
+
+        $values['low_stock_threshold'] = Setting::get('low_stock_threshold', self::DEFAULT_LOW_STOCK);
 
         foreach (array_keys(Setting::HERO_DEFAULTS) as $key) {
             $values[$key] = Setting::valueOrDefault($key);
@@ -187,6 +193,17 @@ class ManageSettings extends Page
                                 ->minValue(0)
                                 ->prefix('Tk')
                                 ->helperText('Orders at or above this amount get free delivery. Leave empty to turn this off.'),
+                        ]),
+                    Section::make('Stock alerts')
+                        ->schema([
+                            TextInput::make('low_stock_threshold')
+                                ->label('Low stock limit (pieces)')
+                                ->numeric()
+                                ->integer()
+                                ->minValue(0)
+                                ->maxValue(1000)
+                                ->placeholder('5')
+                                ->helperText('A product with this many pieces or fewer is shown as "low stock" on the dashboard and in the Products list. Leave empty to use 5.'),
                         ]),
                 ])
                     ->livewireSubmitHandler('save')

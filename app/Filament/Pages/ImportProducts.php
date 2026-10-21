@@ -55,7 +55,7 @@ class ImportProducts extends Page
                         ->acceptedFileTypes(['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'])
                         ->maxSize(1024)
                         ->required()
-                        ->helperText('Max 1 MB and 200 rows. Columns: name, category, description, price, discount_price. In Excel save as "CSV UTF-8". Categories must already exist.'),
+                        ->helperText('Max 1 MB and 200 rows. Required columns: name, category, price, stock. Several rows with the same name = one product with variants. In Excel save as "CSV UTF-8". Categories must already exist (use the full path, like Rings > Gold Rings). Open "How to fill the file" below for all rules.'),
                 ])
                     ->livewireSubmitHandler('import')
                     ->footer([
@@ -113,11 +113,11 @@ class ImportProducts extends Page
             return;
         }
 
-        $failed = count($this->result['errors']);
+        $skipped = (int) $this->result['skipped'];
 
         Notification::make()
-            ->title($this->result['created'] . ' product(s) added' . ($failed ? ', ' . $failed . ' row(s) skipped' : ''))
-            ->color($failed ? 'warning' : 'success')
+            ->title($this->result['created'] . ' product(s) added' . ($skipped ? ', ' . $skipped . ' product(s) skipped' : ''))
+            ->color($skipped ? 'warning' : 'success')
             ->send();
     }
 }

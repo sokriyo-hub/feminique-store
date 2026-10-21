@@ -7,6 +7,7 @@ use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\Schemas\OrderInfolist;
 use App\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Models\Order;
+use App\Support\OrderStock;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -56,6 +57,7 @@ class OrderResource extends Resource
     }
 
     // status বদলানোর বোতাম (তালিকা ও details পেজ দুই জায়গায় ব্যবহার হয়)
+    // Cancelled = stock ফেরে (একবারই). Cancelled থেকে আবার চালু = stock আবার কাটে (কম থাকলে আটকায়).
     public static function changeStatusAction(): Action
     {
         return Action::make('changeStatus')
@@ -69,7 +71,20 @@ class OrderResource extends Resource
                     ->native(false),
             ])
             ->action(function (array $data, Order $record): void {
-                $record->update(['status' => $data['status']]);
+                $error = OrderStock::changeStatus($record, $data['status']);
+
+                if ($error !== null) {
+                    Notification::make()
+                        ->danger()
+                        ->title('Status was not changed')
+                        ->body($error)
+                        ->persistent()
+                        ->send();
+
+                    return;
+                }
+
+                $record->refresh();
 
                 Notification::make()
                     ->success()
