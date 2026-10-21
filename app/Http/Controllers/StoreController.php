@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Page;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Support\Popular;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
@@ -13,25 +14,49 @@ class StoreController
 {
     public function home(): View
     {
+        $newArrivals = Product::with(['images', 'variants'])->latest()->orderByDesc('id')->take(8)->get();
+
         return view('home', [
             'hero' => Setting::heroContent(),
             'heroPaths' => Setting::heroImages(),
             'categories' => Category::topLevel()->withCount('products')->orderBy('sort_order')->orderBy('name')->get(),
-            'newArrivals' => Product::with('images')->latest()->orderByDesc('id')->take(8)->get(),
+            'newArrivals' => $newArrivals,
+            // Best sellers of the last 90 days; filled with newest products that are not already in New Arrivals
+            'popular' => Popular::products(null, 8, $newArrivals->pluck('id')->all()),
         ]);
     }
 
     public function category(string $slug): View
     {
-        $category = Category::where('slug', $slug)->firstOrFail();
+        $category = Category::with('parent')->where('slug', $slug)->firstOrFail();
 
-        $products = $category->products()
-            ->with('images')
+        // Sub-categories A-Z
+        $children = $category->children()->get()
+            ->sort(fn ($a, $b) => strnatcasecmp($a->name, $b->name))
+            ->values();
+
+        // A parent page shows the products of its whole branch (itself + everything below)
+        $branchIds = $category->branchIds();
+
+        $products = Product::with(['images', 'variants'])
+            ->whereIn('category_id', $branchIds)
             ->latest()
             ->orderByDesc('id')
             ->paginate(12);
 
-        return view('category', compact('category', 'products'));
+        // "Customer Favorites in ...": only on the first page, only when there are sub-categories,
+        // and only when there are more products than the favorites row itself (else it would repeat the list)
+        $popular = collect();
+
+        if ($children->isNotEmpty() && $products->currentPage() === 1 && $products->total() > 4) {
+            $popular = Popular::products($branchIds, 4);
+        }
+
+        $backUrl = $category->parent
+            ? route('category.show', $category->parent->slug)
+            : route('home');
+
+        return view('category', compact('category', 'children', 'products', 'popular', 'backUrl'));
     }
 
     public function product(string $slug): View
@@ -60,7 +85,7 @@ class StoreController
             $words = array_slice(explode(' ', $term), 0, 5);
             $phrase = '%' . addcslashes($term, '\\%_') . '%';
 
-            $query = Product::with('images');
+            $query = Product::with(['images', 'variants']);
 
             foreach ($words as $word) {
                 $like = '%' . addcslashes($word, '\\%_') . '%';
@@ -98,7 +123,7 @@ class StoreController
             ->take(100)
             ->values();
 
-        $products = Product::with('images')
+        $products = Product::with(['images', 'variants'])
             ->whereIn('id', $ids)
             ->get()
             ->sortBy(fn ($product) => $ids->search($product->id))

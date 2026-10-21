@@ -77,6 +77,16 @@ class Product extends Model
     public function getTotalStockAttribute(): int
     {
         if ($this->has_variants) {
+            // তালিকায় withSum('variants', 'stock') দেওয়া থাকলে সেটাই নেয় (বাড়তি query লাগে না)
+            if (array_key_exists('variants_sum_stock', $this->attributes)) {
+                return (int) $this->attributes['variants_sum_stock'];
+            }
+
+            // variants আগে থেকে load করা থাকলে সেখান থেকেই যোগ করে
+            if ($this->relationLoaded('variants')) {
+                return (int) $this->variants->sum('stock');
+            }
+
             return (int) $this->variants()->sum('stock');
         }
 
@@ -111,5 +121,66 @@ class Product extends Model
         }
 
         return (int) round(((float) $this->price - (float) $this->discount_price) / (float) $this->price * 100);
+    }
+
+    /**
+     * One variant's prices: [regular price, selling price].
+     * - Variant has its own price: that price, and only its own discount.
+     * - Variant has no price: the product's price (and the product's discount, unless the variant has its own).
+     */
+    public function variantPrices(ProductVariant $variant): array
+    {
+        $own = $variant->price !== null ? (float) $variant->price : null;
+        $regular = $own ?? (float) $this->price;
+
+        if ($variant->discount_price !== null) {
+            $discount = (float) $variant->discount_price;
+        } elseif ($own === null && $this->has_discount) {
+            $discount = (float) $this->discount_price;
+        } else {
+            $discount = null;
+        }
+
+        $selling = ($discount !== null && $discount < $regular) ? $discount : $regular;
+
+        return [$regular, $selling];
+    }
+
+    /**
+     * Price shown on product cards.
+     * With variants: the lowest selling price, and "from" = true when the variant prices differ.
+     */
+    public function cardPricing(): array
+    {
+        $regular = (float) $this->price;
+        $selling = $this->selling_price;
+        $from = false;
+
+        if ($this->has_variants && $this->variants->isNotEmpty()) {
+            $best = null;
+            $sellingPrices = [];
+
+            foreach ($this->variants as $variant) {
+                [$r, $s] = $this->variantPrices($variant);
+                $sellingPrices[] = round($s, 2);
+
+                if ($best === null || $s < $best[1]) {
+                    $best = [$r, $s];
+                }
+            }
+
+            [$regular, $selling] = $best;
+            $from = count(array_unique($sellingPrices)) > 1;
+        }
+
+        $hasDiscount = $selling < $regular;
+
+        return [
+            'regular' => $regular,
+            'selling' => $selling,
+            'has_discount' => $hasDiscount,
+            'percent' => ($hasDiscount && $regular > 0) ? (int) round(($regular - $selling) / $regular * 100) : 0,
+            'from' => $from,
+        ];
     }
 }

@@ -2,19 +2,24 @@
 
 namespace App\View\Components;
 
-use App\Models\Category;
 use App\Models\Page;
 use App\Models\Setting;
 use App\Support\Cart;
+use App\Support\CategoryTree;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\View\Component;
 
 class StoreLayout extends Component
 {
-    public Collection $categories;
+    // Same limit as the "Show in navbar" rule in the admin category form
+    public const NAVBAR_MAX = 6;
 
-    public Collection $navCategories;
+    // All main categories with their sub-categories (mobile menu)
+    public array $menu;
+
+    // Only the main categories chosen for the top menu (desktop)
+    public array $navMenu;
 
     public Collection $policyPages;
 
@@ -29,12 +34,12 @@ class StoreLayout extends Component
         public ?string $backUrl = null,
         public bool $overlay = false, // true = menu sits on top of the hero image (home page)
     ) {
-        $this->categories = Category::orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'slug']);
-        $this->navCategories = Category::where('show_in_navbar', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->limit(6)
-            ->get(['id', 'name', 'slug']);
+        $this->menu = CategoryTree::menu();
+        $this->navMenu = array_slice(
+            array_values(array_filter($this->menu, fn (array $node): bool => $node['navbar'])),
+            0,
+            self::NAVBAR_MAX
+        );
         $this->policyPages = Page::orderBy('id')->get(['id', 'title', 'slug']);
         $this->settings = Setting::pluck('value', 'name')->all();
         $this->cartCount = Cart::count();

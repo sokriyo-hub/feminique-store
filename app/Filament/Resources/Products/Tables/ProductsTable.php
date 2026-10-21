@@ -23,7 +23,7 @@ class ProductsTable
         $lowStock = max(0, (int) Setting::get('low_stock_threshold', '5'));
 
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with('images'))
+            ->modifyQueryUsing(fn ($query) => $query->with('images')->withCount('variants')->withSum('variants', 'stock'))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('main_image')
@@ -52,12 +52,14 @@ class ProductsTable
                 TextColumn::make('discount_percent')
                     ->label('Discount')
                     ->state(fn (Product $record) => $record->discount_percent > 0 ? $record->discount_percent . '%' : '-'),
+                TextColumn::make('variants_count')
+                    ->label('Variants')
+                    ->state(fn (Product $record) => $record->has_variants ? $record->variants_count : '-'),
                 TextColumn::make('stock')
                     ->label('Stock')
                     ->state(fn (Product $record): int => $record->total_stock)
                     ->badge()
-                    ->color(fn (int $state): string => $state <= 0 ? 'danger' : ($state <= $lowStock ? 'warning' : 'success'))
-                    ->sortable(),
+                    ->color(fn (int $state): string => $state <= 0 ? 'danger' : ($state <= $lowStock ? 'warning' : 'success')),
             ])
             ->filters([
                 SelectFilter::make('category')

@@ -49,9 +49,10 @@ class Category extends Model
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
+    // Sub-categories are always A-Z
     public function children(): HasMany
     {
-        return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order')->orderBy('name');
+        return $this->hasMany(Category::class, 'parent_id')->orderBy('name');
     }
 
     public function scopeTopLevel(Builder $query): Builder

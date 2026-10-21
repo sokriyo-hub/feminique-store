@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Resources\Products\ProductResource;
+use App\Support\ProductVariantManager;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -10,7 +11,7 @@ class EditProduct extends EditRecord
 {
     protected static string $resource = ProductResource::class;
 
-    protected array $imagePaths = [];
+    protected array $extras = [];
 
     protected function getHeaderActions(): array
     {
@@ -21,21 +22,23 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['image_paths'] = $this->record->images()->pluck('path')->all();
+        return ProductVariantManager::fill($data, $this->record);
+    }
 
-        return $data;
+    protected function beforeValidate(): void
+    {
+        ProductVariantManager::validate($this->data ?? [], $this->record);
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $this->imagePaths = array_values($data['image_paths'] ?? []);
-        unset($data['image_paths']);
+        $this->extras = ProductVariantManager::extract($data);
 
         return $data;
     }
 
     protected function afterSave(): void
     {
-        $this->record->syncImages($this->imagePaths);
+        ProductVariantManager::persist($this->record, $this->extras);
     }
 }

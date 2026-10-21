@@ -1,18 +1,50 @@
-<x-store-layout :title="$category->name" :back="true" :back-url="route('home')">
+<x-store-layout :title="$category->name" :back="true" :back-url="$backUrl">
     <section class="wrap pb-12 pt-4 lg:pb-20 lg:pt-8">
         <div class="text-center" data-reveal>
             <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Collection') }}</p>
             <h1 class="mt-4 font-serif text-4xl font-light lg:text-6xl">{{ $category->name }}</h1>
             <p class="mt-4 text-sm text-cocoa/70">{{ trans_choice('{0} :count pieces|{1} :count piece|[2,*] :count pieces', $products->total()) }}</p>
         </div>
+    </section>
+
+    {{-- Sub-categories: one scroll row, like the home page --}}
+    @if ($children->isNotEmpty())
+        <x-category-scroller :categories="$children" />
+    @endif
+
+    <section class="wrap pb-12 lg:pb-20 {{ $children->isNotEmpty() ? 'pt-10' : '' }}">
+
+        {{-- Customer Favorites in this category (only when it has sub-categories) --}}
+        @if ($popular->isNotEmpty())
+            <div class="mb-24">
+                <div class="text-center" data-reveal>
+                    <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Most loved') }}</p>
+                    <h2 class="mt-4 font-serif text-3xl font-light lg:text-5xl">{{ __('Customer Favorites in :name', ['name' => $category->name]) }}</h2>
+                </div>
+
+                <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+                    @foreach ($popular as $product)
+                        <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         @if ($products->isEmpty())
-            <div class="mt-16 text-center">
-                <p class="text-cocoa/80">{{ __('No products in this category yet.') }}</p>
-                <a href="{{ route('home') }}" class="mt-8 inline-block border-b border-cocoa pb-1 text-xs uppercase tracking-[0.3em]">{{ __('Back to home') }}</a>
-            </div>
+            @if ($children->isEmpty())
+                <div class="mt-6 text-center">
+                    <p class="text-cocoa/80">{{ __('No products in this category yet.') }}</p>
+                    <a href="{{ route('home') }}" class="mt-8 inline-block border-b border-cocoa pb-1 text-xs uppercase tracking-[0.3em]">{{ __('Back to home') }}</a>
+                </div>
+            @endif
         @else
-            <div class="mt-16 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+            @if ($children->isNotEmpty())
+                <div class="text-center" data-reveal>
+                    <h2 class="font-serif text-3xl font-light lg:text-4xl">{{ __('All pieces') }}</h2>
+                </div>
+            @endif
+
+            <div class="{{ $children->isNotEmpty() ? 'mt-14' : 'mt-6' }} grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
                 @foreach ($products as $product)
                     <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
                 @endforeach

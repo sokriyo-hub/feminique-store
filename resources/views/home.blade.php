@@ -1,6 +1,5 @@
 @php
     $slides = array_map(fn ($path) => asset('storage/' . $path), $heroPaths);
-    $arrowButton = 'flex h-11 w-11 items-center justify-center border transition-colors duration-300 disabled:cursor-default disabled:opacity-30';
 @endphp
 <x-store-layout :description="__('Elegant jewellery and accessories for women.')" :overlay="true">
 
@@ -58,51 +57,10 @@
         </section>
     @endif
 
-    {{-- Categories (one row, drag or swipe, endless loop, no limit on the number) --}}
+    {{-- Categories (main categories only; one row, drag or swipe, endless loop) --}}
     @if ($categories->isNotEmpty())
-        <section id="collections" class="wrap scroll-mt-24 py-24" x-data="dragScroll">
-            <div class="relative text-center" data-reveal>
-                <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Collections') }}</p>
-                <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('Shop by Category') }}</h2>
-
-                <div class="absolute bottom-0 right-0 hidden gap-3 lg:flex" x-show="thumbW < 99.5">
-                    <button type="button" @click="by(-1)" :disabled="!canLeft" aria-label="{{ __('Previous') }}" class="{{ $arrowButton }} border-taupe/60 text-cocoa hover:bg-cocoa hover:text-ivory">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
-                    </button>
-                    <button type="button" @click="by(1)" :disabled="!canRight" aria-label="{{ __('Next') }}" class="{{ $arrowButton }} border-taupe/60 text-cocoa hover:bg-cocoa hover:text-ivory">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
-                    </button>
-                </div>
-            </div>
-
-            <div x-ref="track"
-                 @scroll.passive="update()"
-                 @mousedown="down($event)"
-                 @mousemove.window="move($event)"
-                 @mouseup.window="up()"
-                 @click.capture="guard($event)"
-                 :class="dragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-proximity'"
-                 class="relative mt-14 flex select-none gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-6">
-                @foreach ($categories as $category)
-                    <a href="{{ route('category.show', $category->slug) }}" draggable="false" data-cat
-                       class="group block w-[62%] shrink-0 snap-start sm:w-[38%] md:w-[28%] lg:w-[21%] 2xl:w-[16%]">
-                        <div class="aspect-[4/5] overflow-hidden bg-beige">
-                            @if ($category->image)
-                                <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" loading="lazy" draggable="false"
-                                     class="h-full w-full object-cover transition duration-[1400ms] ease-out group-hover:scale-[1.05]">
-                            @else
-                                <div class="flex h-full w-full items-center justify-center">
-                                    <span class="font-serif text-lg uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="mt-4">
-                            <span class="nav-link font-serif text-2xl leading-tight lg:text-[1.65rem]">{{ $category->name }}</span>
-                        </div>
-                    </a>
-                @endforeach
-            </div>
-        </section>
+        <x-category-scroller :categories="$categories" id="collections"
+                             :eyebrow="__('Collections')" :title="__('Shop by Category')" />
     @endif
 
     {{-- New Arrivals --}}
@@ -115,6 +73,22 @@
 
             <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
                 @foreach ($newArrivals as $product)
+                    <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    {{-- Customer Favorites: best sellers of the last 90 days (filled with newest products) --}}
+    @if ($popular->isNotEmpty())
+        <section id="customer-favorites" class="wrap pb-8 pt-20">
+            <div class="text-center" data-reveal>
+                <p class="text-xs uppercase tracking-[0.35em] text-cocoa/70">{{ __('Most loved') }}</p>
+                <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('Customer Favorites') }}</h2>
+            </div>
+
+            <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+                @foreach ($popular as $product)
                     <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
                 @endforeach
             </div>

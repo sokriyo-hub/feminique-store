@@ -3,24 +3,29 @@
 namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Resources\Products\ProductResource;
+use App\Support\ProductVariantManager;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProduct extends CreateRecord
 {
     protected static string $resource = ProductResource::class;
 
-    protected array $imagePaths = [];
+    protected array $extras = [];
+
+    protected function beforeValidate(): void
+    {
+        ProductVariantManager::validate($this->data ?? []);
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $this->imagePaths = array_values($data['image_paths'] ?? []);
-        unset($data['image_paths']);
+        $this->extras = ProductVariantManager::extract($data);
 
         return $data;
     }
 
     protected function afterCreate(): void
     {
-        $this->record->syncImages($this->imagePaths);
+        ProductVariantManager::persist($this->record, $this->extras);
     }
 }

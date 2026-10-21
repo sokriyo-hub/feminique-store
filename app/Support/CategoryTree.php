@@ -91,6 +91,39 @@ class CategoryTree
         return $build(0, 1);
     }
 
+    /**
+     * Nested menu for the storefront (one query for the whole site header).
+     * Each node: id, name, slug, navbar (show in top menu?), children[]
+     * Main categories by sort_order, sub-categories A-Z. Goes down Category::MAX_DEPTH levels.
+     */
+    public static function menu(): array
+    {
+        $rows = Category::get(['id', 'name', 'slug', 'parent_id', 'sort_order', 'show_in_navbar']);
+        $byParent = self::groupSorted($rows);
+
+        $build = function (int $parent, int $depth) use (&$build, $byParent): array {
+            if ($depth > Category::MAX_DEPTH) {
+                return [];
+            }
+
+            $nodes = [];
+
+            foreach ($byParent->get($parent, collect()) as $c) {
+                $nodes[] = [
+                    'id' => (int) $c->id,
+                    'name' => $c->name,
+                    'slug' => $c->slug,
+                    'navbar' => (bool) $c->show_in_navbar,
+                    'children' => $build((int) $c->id, $depth + 1),
+                ];
+            }
+
+            return $nodes;
+        };
+
+        return $build(0, 1);
+    }
+
     // Dropdown options sorted A-Z by path, level by level: "Rings", "Rings > Gold Rings", "Rings > Silver Rings", "Necklaces" ...
     private static function optionsFrom(array $rows): array
     {
