@@ -147,6 +147,30 @@ class Product extends Model
     }
 
     /**
+     * Cart/order line-এর stock: variant থাকলে variant-এর stock, না থাকলে product-এর নিজের stock.
+     */
+    public function stockFor(?ProductVariant $variant = null): int
+    {
+        if ($this->has_variants) {
+            return $variant ? (int) $variant->stock : 0;
+        }
+
+        return (int) $this->stock;
+    }
+
+    /**
+     * Cart/order line-এর দাম: [regular, selling]. Variant product হলে variant-এর হিসাবে।
+     */
+    public function linePrices(?ProductVariant $variant = null): array
+    {
+        if ($this->has_variants && $variant) {
+            return $this->variantPrices($variant);
+        }
+
+        return [(float) $this->price, $this->selling_price];
+    }
+
+    /**
      * Price shown on product cards.
      * With variants: the lowest selling price, and "from" = true when the variant prices differ.
      */

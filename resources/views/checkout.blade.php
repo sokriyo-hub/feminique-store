@@ -91,15 +91,17 @@
 
                     <ul class="mt-6 divide-y divide-taupe/30 border-y border-taupe/30">
                         @foreach ($lines as $line)
-                            @php($image = $line->product->images->first())
                             <li class="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-4 py-4">
-                                <div class="aspect-[4/5] overflow-hidden bg-beige">
-                                    @if ($image)
-                                        <img src="{{ asset('storage/' . $image->path) }}" alt="" loading="lazy" class="h-full w-full object-cover">
+                                <div class="aspect-[4/5] overflow-hidden rounded-md bg-beige">
+                                    @if ($line->image)
+                                        <img src="{{ asset('storage/' . $line->image->path) }}" alt="" loading="lazy" class="h-full w-full object-cover">
                                     @endif
                                 </div>
                                 <div class="min-w-0">
                                     <p class="truncate font-serif text-lg leading-snug text-cocoa">{{ $line->product->name }}</p>
+                                    @if ($line->label)
+                                        <p class="truncate text-xs text-cocoa/70">{{ $line->label }}</p>
+                                    @endif
                                     <p class="mt-0.5 text-xs text-cocoa/70">{{ $line->quantity }} &times; {{ Money::format($line->unit_price) }}</p>
                                 </div>
                                 <p class="text-sm text-cocoa">{{ Money::format($line->line_total) }}</p>

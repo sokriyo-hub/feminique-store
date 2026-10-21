@@ -32,7 +32,7 @@
                 <a href="{{ route('home') }}#collections" class="mt-8 inline-block border-b border-cocoa pb-1 text-xs uppercase tracking-[0.3em]">{{ __('Browse collections') }}</a>
             </div>
         @else
-            <div class="mt-16 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+            <div class="mt-16 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-8 2xl:grid-cols-6">
                 @foreach ($products as $product)
                     <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
                 @endforeach

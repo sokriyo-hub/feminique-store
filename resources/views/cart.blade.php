@@ -7,6 +7,15 @@
             <h1 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('Cart') }}</h1>
         </div>
 
+        {{-- Red messages: stock changed, quantity was adjusted --}}
+        @if (! empty($warnings))
+            <div class="mx-auto mt-10 max-w-3xl space-y-2" role="alert">
+                @foreach ($warnings as $warning)
+                    <p class="border border-red-300 bg-red-50 px-5 py-3 text-sm text-red-700">{{ $warning }}</p>
+                @endforeach
+            </div>
+        @endif
+
         @if ($lines->isEmpty())
             <div class="mt-16 text-center">
                 <p class="font-serif text-2xl text-cocoa">{{ __('Your cart is empty.') }}</p>
@@ -20,11 +29,10 @@
                 <ul class="divide-y divide-taupe/30 border-y border-taupe/30">
                     @foreach ($lines as $line)
                         @php($product = $line->product)
-                        @php($image = $product->images->first())
                         <li class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-5 py-6 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-8">
-                            <a href="{{ route('product.show', $product->slug) }}" class="block aspect-[4/5] overflow-hidden bg-beige">
-                                @if ($image)
-                                    <img src="{{ asset('storage/' . $image->path) }}" alt="{{ $product->name }}" loading="lazy" class="h-full w-full object-cover">
+                            <a href="{{ route('product.show', $product->slug) }}" class="block aspect-[4/5] overflow-hidden rounded-lg bg-beige">
+                                @if ($line->image)
+                                    <img src="{{ asset('storage/' . $line->image->path) }}" alt="{{ $product->name }}" loading="lazy" class="h-full w-full object-cover">
                                 @else
                                     <span class="flex h-full w-full items-center justify-center font-serif text-xs uppercase tracking-[0.3em] text-cocoa/40">Feminique</span>
                                 @endif
@@ -34,10 +42,13 @@
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="min-w-0">
                                         <a href="{{ route('product.show', $product->slug) }}" class="font-serif text-xl leading-snug text-cocoa transition-colors hover:text-mocha">{{ $product->name }}</a>
+                                        @if ($line->label)
+                                            <p class="mt-1 text-xs text-cocoa/70">{{ $line->label }}</p>
+                                        @endif
                                         <p class="mt-1.5 text-sm">
                                             <span class="text-cocoa">{{ Money::format($line->unit_price) }}</span>
-                                            @if ($product->has_discount)
-                                                <span class="ml-2 text-cocoa/60 line-through">{{ Money::format($product->price) }}</span>
+                                            @if ($line->regular_price > $line->unit_price)
+                                                <span class="ml-2 text-cocoa/60 line-through">{{ Money::format($line->regular_price) }}</span>
                                             @endif
                                         </p>
                                     </div>
@@ -45,8 +56,8 @@
                                 </div>
 
                                 <div class="flex items-center justify-between gap-4">
-                                    {{-- Quantity: changing it saves automatically --}}
-                                    <form method="POST" action="{{ route('cart.update', $product) }}" x-data="{ q: {{ $line->quantity }} }">
+                                    {{-- Quantity: limit = stock. Changing it saves automatically --}}
+                                    <form method="POST" action="{{ route('cart.update', ['line' => $line->key]) }}" x-data="{ q: {{ (int) $line->quantity }}, max: {{ max(1, (int) $line->stock) }} }">
                                         @csrf
                                         <input type="hidden" name="quantity" :value="q">
                                         <div class="inline-flex items-center border border-cocoa/40">
@@ -58,15 +69,15 @@
                                             </button>
                                             <span x-text="q" class="w-10 text-center text-sm text-cocoa"></span>
                                             <button type="button" aria-label="{{ __('Increase quantity') }}"
-                                                    @click="if (q < {{ $max }}) { q++; $nextTick(() => $el.closest('form').requestSubmit()) }"
-                                                    :disabled="q >= {{ $max }}"
+                                                    @click="if (q < max) { q++; $nextTick(() => $el.closest('form').requestSubmit()) }"
+                                                    :disabled="q >= max"
                                                     class="flex h-10 w-10 items-center justify-center text-cocoa transition-colors hover:bg-cocoa hover:text-ivory disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-cocoa">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                                             </button>
                                         </div>
                                     </form>
 
-                                    <form method="POST" action="{{ route('cart.remove', $product) }}">
+                                    <form method="POST" action="{{ route('cart.remove', ['line' => $line->key]) }}">
                                         @csrf
                                         <button type="submit" class="nav-link text-xs uppercase tracking-[0.25em] text-cocoa/70 transition-colors hover:text-cocoa">{{ __('Remove') }}</button>
                                     </form>

@@ -71,7 +71,7 @@
                 <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('New Arrivals') }}</h2>
             </div>
 
-            <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+            <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-8 2xl:grid-cols-6">
                 @foreach ($newArrivals as $product)
                     <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
                 @endforeach
@@ -87,7 +87,7 @@
                 <h2 class="mt-4 font-serif text-4xl font-light lg:text-5xl">{{ __('Customer Favorites') }}</h2>
             </div>
 
-            <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5">
+            <div class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-8 2xl:grid-cols-6">
                 @foreach ($popular as $product)
                     <x-product-card :product="$product" :delay="($loop->index % 5) * 80" />
                 @endforeach

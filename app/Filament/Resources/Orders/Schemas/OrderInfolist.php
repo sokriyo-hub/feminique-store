@@ -49,6 +49,12 @@ class OrderInfolist
                             ->schema([
                                 TextEntry::make('product_name')
                                     ->label('Product'),
+                                TextEntry::make('variant_label')
+                                    ->label('Variant')
+                                    ->placeholder('-'),
+                                TextEntry::make('sku')
+                                    ->label('SKU')
+                                    ->placeholder('-'),
                                 TextEntry::make('quantity')
                                     ->label('Qty'),
                                 TextEntry::make('unit_price')
@@ -58,7 +64,7 @@ class OrderInfolist
                                     ->label('Line total')
                                     ->money('BDT'),
                             ])
-                            ->columns(4),
+                            ->columns(6),
                     ])
                     ->columnSpanFull(),
                 Section::make('Totals')

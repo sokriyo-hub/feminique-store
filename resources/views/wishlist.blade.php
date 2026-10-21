@@ -20,6 +20,6 @@
         </div>
 
         <div x-ref="list" x-html="html"
-             class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 2xl:grid-cols-5"></div>
+             class="mt-14 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-8 2xl:grid-cols-6"></div>
     </section>
 </x-store-layout>

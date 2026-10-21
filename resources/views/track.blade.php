@@ -119,6 +119,9 @@
                         <li class="flex items-baseline justify-between gap-6 py-4">
                             <div class="min-w-0">
                                 <p class="font-serif text-lg leading-snug text-cocoa">{{ $item->product_name }}</p>
+                                @if ($item->variant_label)
+                                    <p class="mt-0.5 text-xs text-cocoa/70">{{ $item->variant_label }}</p>
+                                @endif
                                 <p class="mt-0.5 text-xs text-cocoa/70">{{ $item->quantity }} &times; {{ Money::format($item->unit_price) }}</p>
                             </div>
                             <p class="shrink-0 text-sm text-cocoa">{{ Money::format($item->line_total) }}</p>

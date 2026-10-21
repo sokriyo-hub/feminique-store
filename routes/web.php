@@ -36,13 +36,14 @@ Route::post('/cart/add', [CartController::class, 'add'])
     ->middleware('throttle:60,1')
     ->name('cart.add');
 
-Route::post('/cart/{product}/update', [CartController::class, 'update'])
-    ->whereNumber('product')
+// {line} = "productId-variantId" (যেমন 12-3). শুধু "12" দিলে variant ছাড়া product ধরা হয়।
+Route::post('/cart/{line}/update', [CartController::class, 'update'])
+    ->where('line', '[0-9]+(-[0-9]+)?')
     ->middleware('throttle:60,1')
     ->name('cart.update');
 
-Route::post('/cart/{product}/remove', [CartController::class, 'remove'])
-    ->whereNumber('product')
+Route::post('/cart/{line}/remove', [CartController::class, 'remove'])
+    ->where('line', '[0-9]+(-[0-9]+)?')
     ->middleware('throttle:60,1')
     ->name('cart.remove');
 

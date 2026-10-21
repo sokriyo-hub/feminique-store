@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\DeliveryZone;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Support\Cart;
 use App\Support\Delivery;
 use App\Support\Phone;
@@ -17,6 +19,13 @@ class CheckoutController
 {
     public function show(): View|RedirectResponse
     {
+        // Stock কমে গেলে: quantity ঠিক করে cart পেজে ফেরত, সাথে লাল বার্তা
+        $messages = Cart::reconcile();
+
+        if ($messages) {
+            return redirect()->route('cart')->with('cart_warnings', $messages);
+        }
+
         $lines = Cart::lines();
 
         if ($lines->isEmpty()) {
@@ -48,9 +57,7 @@ class CheckoutController
             return redirect()->route('home');
         }
 
-        $lines = Cart::lines();
-
-        if ($lines->isEmpty()) {
+        if (Cart::count() === 0) {
             return redirect()->route('cart');
         }
 
@@ -81,8 +88,80 @@ class CheckoutController
             ? $zones->first()
             : $zones->firstWhere('id', (int) $data['zone_id']);
 
-        $order = DB::transaction(function () use ($lines, $zone, $data) {
-            $subtotal = Cart::subtotal($lines);
+        /*
+         * Transaction: stock সারিগুলো lock করে আবার যাচাই, তারপর order বানানো ও stock কমানো।
+         * ফেরত: Order (সফল) | false (stock কম) | null (cart খালি)
+         */
+        $order = DB::transaction(function () use ($zone, $data) {
+            $parsed = [];
+
+            foreach (Cart::raw() as $key => $quantity) {
+                $ids = Cart::parseKey($key);
+
+                if ($ids) {
+                    $parsed[] = [$ids[0], $ids[1], $quantity];
+                }
+            }
+
+            if (! $parsed) {
+                return null;
+            }
+
+            // lock সবসময় একই ক্রমে (id অনুযায়ী), যাতে দুই order একে অপরকে আটকে না দেয়
+            $products = Product::whereIn('id', array_unique(array_column($parsed, 0)))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $variantIds = array_values(array_filter(array_column($parsed, 1)));
+
+            $variants = $variantIds
+                ? ProductVariant::whereIn('id', $variantIds)->orderBy('id')->lockForUpdate()->get()->keyBy('id')
+                : collect();
+
+            $rows = [];
+
+            foreach ($parsed as [$productId, $variantId, $quantity]) {
+                $product = $products->get($productId);
+
+                if (! $product) {
+                    continue;
+                }
+
+                $variant = null;
+
+                if ($product->has_variants) {
+                    $variant = $variants->get($variantId);
+
+                    if (! $variant || (int) $variant->product_id !== (int) $product->id) {
+                        continue;
+                    }
+                } elseif ($variantId !== 0) {
+                    continue;
+                }
+
+                if ($product->stockFor($variant) < $quantity) {
+                    return false; // কিছুই লেখা হয়নি, তাই নিরাপদে বেরিয়ে যাওয়া যায়
+                }
+
+                [$regular, $unit] = $product->linePrices($variant);
+
+                $rows[] = [
+                    'product' => $product,
+                    'variant' => $variant,
+                    'quantity' => $quantity,
+                    'regular' => $regular,
+                    'unit' => $unit,
+                    'total' => round($unit * $quantity, 2),
+                ];
+            }
+
+            if (! $rows) {
+                return null;
+            }
+
+            $subtotal = round((float) array_sum(array_column($rows, 'total')), 2);
             $charge = Delivery::charge($zone, $subtotal);
 
             $order = Order::create([
@@ -96,22 +175,49 @@ class CheckoutController
                 'delivery_charge' => $charge,
                 'total' => round($subtotal + $charge, 2),
                 'status' => 'pending',
+                'stock_deducted' => true,
             ]);
 
-            // নাম ও দামের snapshot, পরে product বদলালেও order বদলাবে না
-            foreach ($lines as $line) {
+            foreach ($rows as $row) {
+                $product = $row['product'];
+                $variant = $row['variant'];
+
+                // নাম, দাম, variant ও SKU-র snapshot: পরে product বদলালেও order বদলাবে না
                 $order->items()->create([
-                    'product_id' => $line->product->id,
-                    'product_name' => $line->product->name,
-                    'regular_price' => $line->product->price,
-                    'unit_price' => $line->unit_price,
-                    'quantity' => $line->quantity,
-                    'line_total' => $line->line_total,
+                    'product_id' => $product->id,
+                    'product_variant_id' => $variant?->id,
+                    'product_name' => $product->name,
+                    'variant_label' => $variant?->label(),
+                    'sku' => $variant?->sku ?? $product->sku,
+                    'regular_price' => $row['regular'],
+                    'unit_price' => $row['unit'],
+                    'quantity' => $row['quantity'],
+                    'line_total' => $row['total'],
                 ]);
+
+                // stock কমানো
+                if ($variant) {
+                    $variant->decrement('stock', $row['quantity']);
+                } else {
+                    $product->decrement('stock', $row['quantity']);
+                }
             }
 
             return $order;
         });
+
+        if ($order === null) {
+            return redirect()->route('cart');
+        }
+
+        // Stock কম পড়ে গেছে (অন্য কেউ আগে কিনেছে): quantity ঠিক করে cart-এ ফেরত
+        if ($order === false) {
+            $messages = Cart::reconcile();
+
+            return redirect()->route('cart')->with('cart_warnings', $messages ?: [
+                __('Stock has changed. Please review your cart.'),
+            ]);
+        }
 
         Cart::clear();
         session(['last_order_id' => $order->id]);
