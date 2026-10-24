@@ -57,11 +57,16 @@
         </section>
     @endif
 
+    <x-ad-slot name="home_after_hero" />
+
     {{-- Categories (main categories only; one row, drag or swipe, endless loop) --}}
     @if ($categories->isNotEmpty())
         <x-category-scroller :categories="$categories" id="collections"
                              :eyebrow="__('Collections')" :title="__('Shop by Category')" />
     @endif
+
+    {{-- A running campaign banner sits here by default; an ad can use this place too --}}
+    <x-ad-slot name="home_after_categories" />
 
     {{-- New Arrivals --}}
     @if ($newArrivals->isNotEmpty())
@@ -79,6 +84,8 @@
         </section>
     @endif
 
+    <x-ad-slot name="home_after_new_arrivals" />
+
     {{-- Customer Favorites: best sellers of the last 90 days (filled with newest products) --}}
     @if ($popular->isNotEmpty())
         <section id="customer-favorites" class="wrap pb-8 pt-20">
@@ -94,5 +101,7 @@
             </div>
         </section>
     @endif
+
+    <x-ad-slot name="home_after_favorites" />
 
 </x-store-layout>

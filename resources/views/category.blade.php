@@ -7,9 +7,13 @@
         </div>
     </section>
 
+    <x-ad-slot name="category_above_subcategories" />
+
     {{-- Sub-categories: one scroll row, like the home page --}}
     @if ($children->isNotEmpty())
         <x-category-scroller :categories="$children" />
+
+        <x-ad-slot name="category_below_subcategories" />
     @endif
 
     <section class="wrap pb-12 lg:pb-20 {{ $children->isNotEmpty() ? 'pt-6' : '' }}">
@@ -69,4 +73,6 @@
             @endif
         @endif
     </section>
+
+    <x-ad-slot name="category_bottom" />
 </x-store-layout>

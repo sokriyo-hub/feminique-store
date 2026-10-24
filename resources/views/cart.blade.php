@@ -107,4 +107,6 @@
             </div>
         @endif
     </section>
+
+    <x-ad-slot name="cart_bottom" />
 </x-store-layout>

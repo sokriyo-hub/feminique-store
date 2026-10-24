@@ -4,6 +4,9 @@
     $label = 'block text-xs uppercase tracking-[0.25em] text-cocoa/70';
 @endphp
 <x-store-layout :title="__('Checkout')" :back="true" :back-url="route('cart')">
+
+    <x-ad-slot name="checkout_above" />
+
     <section class="wrap py-10 lg:py-14">
 
         <div class="text-center" data-reveal>
@@ -27,6 +30,9 @@
                   }"
                   @submit="submitting = true">
                 @csrf
+
+                {{-- The total the customer sees. If the price changes before the order is placed, the server refuses it. --}}
+                <input type="hidden" name="seen_total" :value="total">
 
                 {{-- Bot-দের ফাঁদ: মানুষের চোখে পড়ে না --}}
                 <div class="hidden" aria-hidden="true">
@@ -124,7 +130,9 @@
                         </div>
                     </dl>
 
-                    @if ($freeFrom !== null)
+                    @if ($freeCampaign)
+                        <p class="mt-5 text-xs leading-relaxed text-cocoa/70">{{ __('Free delivery during :name.', ['name' => $freeCampaign]) }}</p>
+                    @elseif ($freeFrom !== null)
                         <p class="mt-5 text-xs leading-relaxed text-cocoa/70">{{ __('Free delivery on orders of :amount or more.', ['amount' => Money::format($freeFrom)]) }}</p>
                     @endif
 
@@ -137,4 +145,6 @@
             </form>
         @endif
     </section>
+
+    <x-ad-slot name="checkout_below" />
 </x-store-layout>

@@ -136,6 +136,41 @@
     }
 }
 
+/*
+ * Ads and banners: the height of a product / category card picture.
+ * A card picture is 4:5 and exactly one column of the product grid, so
+ * height = one column width x 1.25. The columns and gaps below are the same as the product grid
+ * (2 columns, md 4, lg 5, 2xl 6). 100cqw = the width of the box around the ad.
+ * min-height: on a phone the ad may grow when its text needs more room.
+ * If you change the product grid columns, change the numbers here too.
+ */
+.ad-wrap {
+    container-type: inline-size;
+}
+
+.ad-frame {
+    min-height: 12rem; /* fallback for very old browsers */
+    min-height: calc((100cqw - 1.25rem) / 2 * 1.25);
+}
+
+@media (min-width: 48rem) {
+    .ad-frame {
+        min-height: calc((100cqw - 3.75rem) / 4 * 1.25);
+    }
+}
+
+@media (min-width: 64rem) {
+    .ad-frame {
+        min-height: calc((100cqw - 8rem) / 5 * 1.25);
+    }
+}
+
+@media (min-width: 96rem) {
+    .ad-frame {
+        min-height: calc((100cqw - 10rem) / 6 * 1.25);
+    }
+}
+
 /* কেউ কম-animation চাইলে সব বন্ধ */
 @media (prefers-reduced-motion: reduce) {
     html {

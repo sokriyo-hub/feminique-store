@@ -20,7 +20,7 @@ class CartController
         return view('cart', [
             'lines' => $lines,
             'subtotal' => Cart::subtotal($lines),
-            'max' => Cart::MAX_QTY, // TEMP (পুরনো view-এর জন্য), E2-তে যাবে
+        // 'max' => Cart::MAX_QTY, // TEMP (পুরনো view-এর জন্য), E2-তে যাবে
             'warnings' => array_merge((array) session('cart_warnings', []), $messages),
         ]);
     }

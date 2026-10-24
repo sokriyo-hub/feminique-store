@@ -6,6 +6,7 @@ use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\CampaignPricing;
 use App\Support\Cart;
 use App\Support\Delivery;
 use App\Support\Phone;
@@ -47,6 +48,7 @@ class CheckoutController
             'zones' => $zones,
             'zoneData' => $zoneData,
             'freeFrom' => Delivery::freeThreshold(),
+            'freeCampaign' => CampaignPricing::freeDeliveryCampaign()?->name,
         ]);
     }
 
@@ -80,6 +82,7 @@ class CheckoutController
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['required', 'string', 'min:5', 'max:500'],
             'zone_id' => [Rule::requiredIf($zones->count() > 1), 'nullable', 'integer', Rule::in($zones->pluck('id')->all())],
+            'seen_total' => ['nullable', 'numeric'],
         ], [
             'phone.regex' => __('Enter a valid mobile number, like 01712345678.'),
         ]);
@@ -88,11 +91,14 @@ class CheckoutController
             ? $zones->first()
             : $zones->firstWhere('id', (int) $data['zone_id']);
 
+        // The total the customer saw on the checkout page (null = an old form without it)
+        $seen = isset($data['seen_total']) ? (float) $data['seen_total'] : null;
+
         /*
          * Transaction: stock সারিগুলো lock করে আবার যাচাই, তারপর order বানানো ও stock কমানো।
-         * ফেরত: Order (সফল) | false (stock কম) | null (cart খালি)
+         * ফেরত: Order (সফল) | false (stock কম) | 'changed' (দাম বদলেছে) | null (cart খালি)
          */
-        $order = DB::transaction(function () use ($zone, $data) {
+        $order = DB::transaction(function () use ($zone, $data, $seen) {
             $parsed = [];
 
             foreach (Cart::raw() as $key => $quantity) {
@@ -163,6 +169,12 @@ class CheckoutController
 
             $subtotal = round((float) array_sum(array_column($rows, 'total')), 2);
             $charge = Delivery::charge($zone, $subtotal);
+            $total = round($subtotal + $charge, 2);
+
+            // The price changed after the customer saw it (a campaign started or ended): do NOT place the order
+            if ($seen !== null && abs($total - $seen) > 0.009) {
+                return 'changed';
+            }
 
             $order = Order::create([
                 'code' => Order::generateCode(),
@@ -173,7 +185,7 @@ class CheckoutController
                 'delivery_zone_name' => $zone->name,
                 'subtotal' => $subtotal,
                 'delivery_charge' => $charge,
-                'total' => round($subtotal + $charge, 2),
+                'total' => $total,
                 'status' => 'pending',
                 'stock_deducted' => true,
             ]);
@@ -216,6 +228,13 @@ class CheckoutController
 
             return redirect()->route('cart')->with('cart_warnings', $messages ?: [
                 __('Stock has changed. Please review your cart.'),
+            ]);
+        }
+
+        // দাম বদলেছে (campaign শুরু বা শেষ): cart-এ ফেরত, নতুন দাম দেখে আবার order করবে
+        if ($order === 'changed') {
+            return redirect()->route('cart')->with('cart_warnings', [
+                __('The price changed while you were checking out (a campaign started or ended). Please review your cart and place the order again.'),
             ]);
         }
 

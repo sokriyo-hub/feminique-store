@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CampaignPricing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -99,13 +100,14 @@ class Product extends Model
     }
 
     // ডিসকাউন্ট আছে কিনা (discount_price থাকলে এবং price-এর চেয়ে কম হলে)
+    // NOTE: this is the product's OWN discount only (admin and CSV use it). Campaigns are not included.
     public function getHasDiscountAttribute(): bool
     {
         return $this->discount_price !== null
             && (float) $this->discount_price < (float) $this->price;
     }
 
-    // বিক্রির দাম: ডিসকাউন্ট থাকলে discount_price, না থাকলে price
+    // বিক্রির দাম: ডিসকাউন্ট থাকলে discount_price, না থাকলে price (campaign ছাড়া)
     public function getSellingPriceAttribute(): float
     {
         return $this->has_discount
@@ -124,11 +126,37 @@ class Product extends Model
     }
 
     /**
+     * Campaign rule: the customer gets the LOWER of
+     *  - the price the product already sells at (its own discount, if any), and
+     *  - the campaign price (regular price minus the campaign %, whole taka).
+     * Two discounts are never added together.
+     */
+    private function applyCampaign(float $regular, float $selling): float
+    {
+        $percent = CampaignPricing::percentFor((int) $this->category_id, (int) $this->id);
+
+        if ($percent <= 0) {
+            return $selling;
+        }
+
+        $campaign = (float) round($regular * (100 - $percent) / 100);
+
+        return $campaign < $selling ? $campaign : $selling;
+    }
+
+    // The price a customer pays right now for a product without variants (campaign included)
+    public function sellingNow(): float
+    {
+        return $this->applyCampaign((float) $this->price, $this->selling_price);
+    }
+
+    /**
      * One variant's prices: [regular price, selling price].
      * - Variant has its own price: that price, and only its own discount.
      * - Variant has no price: the product's price (and the product's discount, unless the variant has its own).
+     * - A running campaign can lower the selling price further. Pass $withCampaign = false for the base price.
      */
-    public function variantPrices(ProductVariant $variant): array
+    public function variantPrices(ProductVariant $variant, bool $withCampaign = true): array
     {
         $own = $variant->price !== null ? (float) $variant->price : null;
         $regular = $own ?? (float) $this->price;
@@ -142,6 +170,10 @@ class Product extends Model
         }
 
         $selling = ($discount !== null && $discount < $regular) ? $discount : $regular;
+
+        if ($withCampaign) {
+            $selling = $this->applyCampaign($regular, $selling);
+        }
 
         return [$regular, $selling];
     }
@@ -160,24 +192,31 @@ class Product extends Model
 
     /**
      * Cart/order line-এর দাম: [regular, selling]. Variant product হলে variant-এর হিসাবে।
+     * Campaign included unless $withCampaign = false.
      */
-    public function linePrices(?ProductVariant $variant = null): array
+    public function linePrices(?ProductVariant $variant = null, bool $withCampaign = true): array
     {
         if ($this->has_variants && $variant) {
-            return $this->variantPrices($variant);
+            return $this->variantPrices($variant, $withCampaign);
         }
 
-        return [(float) $this->price, $this->selling_price];
+        $selling = $this->selling_price;
+
+        if ($withCampaign) {
+            $selling = $this->applyCampaign((float) $this->price, $selling);
+        }
+
+        return [(float) $this->price, $selling];
     }
 
     /**
-     * Price shown on product cards.
+     * Price shown on product cards (campaign included).
      * With variants: the lowest selling price, and "from" = true when the variant prices differ.
      */
     public function cardPricing(): array
     {
         $regular = (float) $this->price;
-        $selling = $this->selling_price;
+        $selling = $this->sellingNow();
         $from = false;
 
         if ($this->has_variants && $this->variants->isNotEmpty()) {
