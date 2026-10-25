@@ -138,6 +138,12 @@
                         <dt class="text-cocoa/80">{{ __('Delivery charge') }}</dt>
                         <dd class="text-cocoa">{{ (float) $order->delivery_charge > 0 ? Money::format($order->delivery_charge) : __('Free') }}</dd>
                     </div>
+                    @if ((float) $order->discount > 0)
+                        <div class="flex items-baseline justify-between">
+                            <dt class="text-cocoa/80">{{ __('Discount') }}</dt>
+                            <dd class="text-cocoa">- {{ Money::format($order->discount) }}</dd>
+                        </div>
+                    @endif
                     <div class="flex items-baseline justify-between border-t border-taupe/30 pt-4">
                         <dt class="text-xs uppercase tracking-[0.25em] text-cocoa/70">{{ __('Total') }}</dt>
                         <dd class="text-xl text-cocoa">{{ Money::format($order->total) }}</dd>

@@ -6,6 +6,7 @@ use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
@@ -24,6 +25,17 @@ class OrdersTable
                     ->searchable(),
                 TextColumn::make('phone')
                     ->searchable(),
+                TextColumn::make('source')
+                    ->label('Source')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => Order::sourceOptions()[$state] ?? $state)
+                    ->color(fn (string $state): string => Order::sourceColor($state))
+                    ->sortable(),
+                TextColumn::make('created_by_admin')
+                    ->label('Created by')
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state ? 'Admin' : 'Customer')
+                    ->color(fn ($state): string => $state ? 'info' : 'gray'),
                 TextColumn::make('total')
                     ->money('BDT')
                     ->sortable(),
@@ -40,6 +52,11 @@ class OrdersTable
             ->filters([
                 SelectFilter::make('status')
                     ->options(Order::statusOptions()),
+                SelectFilter::make('source')
+                    ->options(Order::sourceOptions()),
+                Filter::make('created_by_admin')
+                    ->label('Created by admin')
+                    ->query(fn ($query) => $query->where('created_by_admin', true)),
             ])
             ->recordActions([
                 ViewAction::make(),

@@ -26,7 +26,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ? $title . ' | Feminique' : 'Feminique' }}</title>
     <meta name="description" content="{{ $description ?: __('Elegant jewellery and accessories for women.') }}">
-        @if ($favicon !== '')
+    @if ($favicon !== '')
         <link rel="icon" href="{{ asset('storage/' . $favicon) }}">
     @endif
     <script>document.documentElement.classList.add('js');</script>
@@ -73,14 +73,16 @@
                     @endif
                 </a>
 
-                               {{-- Desktop menu: only the categories chosen in admin. Hover opens the sub-categories.
-                     The running offer (if switched on) sits in the middle, just above the categories. --}}
+                {{-- Desktop menu: only the categories chosen in admin. Hover opens the sub-categories.
+                     The running offer (if switched on) sits in the middle, just above the categories.
+                     Hover on the offer opens a drop-down under it, like the categories do. --}}
                 @if (count($navMenu) > 0 || $offer)
                     <nav class="hidden min-w-0 xl:block" aria-label="{{ __('Categories') }}">
 
-                        @if ($offer)
+                                                @if ($offer)
+                            {{-- Offer name + countdown: a plain link like the categories (the bar under it comes from "nav-link") --}}
                             <a href="{{ $offer->offerUrl() }}"
-                               class="mx-auto mb-2 flex w-fit items-center justify-center gap-3 text-[0.6875rem] uppercase tracking-[0.25em] text-mocha transition-colors hover:text-cocoa"
+                               class="nav-link mx-auto mb-2 flex w-fit items-center justify-center gap-3 text-[0.6875rem] uppercase tracking-[0.25em] text-mocha transition-colors hover:text-cocoa"
                                @if (request()->is('offers/' . $offer->slug)) aria-current="page" @endif
                                x-data="{
                                    showClock: {{ $offer->show_countdown ? 'true' : 'false' }},
@@ -248,7 +250,7 @@
                 </div>
             </div>
 
-            {{-- Menu panel: all main categories (tap the arrow for sub-categories) + Track order --}}
+            {{-- Menu panel: all main categories (tap the arrow for sub-categories) + the offer + Track order --}}
             <nav x-show="open" x-cloak x-transition.opacity.duration.300ms
                  class="{{ $dropBox }} max-h-[calc(100svh-6rem)] overflow-y-auto xl:hidden"
                  aria-label="{{ __('Categories') }}">
@@ -256,14 +258,13 @@
                     @foreach ($menu as $node)
                         @include('partials.mobile-menu-node', ['node' => $node, 'level' => 0])
                     @endforeach
-                    
-                    
+
                     @if ($offer)
                         <li class="border-b border-taupe/20">
                             <a href="{{ $offer->offerUrl() }}" class="block py-4 text-mocha">{{ $offer->menuLabel() }}</a>
                         </li>
                     @endif
-                    
+
                     <li>
                         <a href="{{ route('track') }}" class="flex items-center gap-3 py-4 text-cocoa">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">

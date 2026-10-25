@@ -26,6 +26,14 @@ class OrderInfolist
                         TextEntry::make('created_at')
                             ->label('Placed at')
                             ->dateTime(),
+                        TextEntry::make('source')
+                            ->label('Source')
+                            ->badge()
+                            ->formatStateUsing(fn (string $state): string => Order::sourceOptions()[$state] ?? $state)
+                            ->color(fn (string $state): string => Order::sourceColor($state)),
+                        TextEntry::make('created_by')
+                            ->label('Created by')
+                            ->state(fn (Order $record): string => $record->created_by_admin ? 'Admin (Order desk)' : 'Customer (website)'),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
@@ -71,6 +79,9 @@ class OrderInfolist
                     ->schema([
                         TextEntry::make('subtotal')
                             ->money('BDT'),
+                        TextEntry::make('discount')
+                            ->label('Discount')
+                            ->money('BDT'),
                         TextEntry::make('delivery_zone_name')
                             ->label('Delivery zone')
                             ->placeholder('-'),
@@ -81,7 +92,7 @@ class OrderInfolist
                             ->money('BDT')
                             ->weight('bold'),
                     ])
-                    ->columns(4)
+                    ->columns(5)
                     ->columnSpanFull(),
             ]);
     }
