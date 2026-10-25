@@ -17,6 +17,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
@@ -57,11 +59,15 @@ class ManageSettings extends Page
     // Low-stock limit used until the admin saves their own
     private const DEFAULT_LOW_STOCK = '5';
 
+    // Favicon limits
+    private const FAVICON_MAX_SIDE = 1024;
+
     public function mount(): void
     {
         $values = [
             'hero_images' => Setting::heroImages(),
             'site_logo' => Setting::get('site_logo'),
+            'site_favicon' => Setting::get('site_favicon'),
         ];
 
         foreach (self::TEXT_KEYS as $key) {
@@ -105,6 +111,16 @@ class ManageSettings extends Page
                                     )
                                 )
                                 ->helperText('Shown at the left of the menu. Use a PNG with a transparent background, wide (horizontal) logo works best, max 2 MB. If empty, the text "Feminique" is shown.'),
+                            FileUpload::make('site_favicon')
+                                ->label('Favicon (browser tab icon)')
+                                ->disk('public')
+                                ->directory('branding')
+                                ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'])
+                                ->maxSize(512)
+                                ->saveUploadedFileUsing(
+                                    fn (TemporaryUploadedFile $file): string => self::storeFavicon($file)
+                                )
+                                ->helperText('PNG or ICO, max 512 KB. Use a square picture, for example 512 x 512 px. It is shown in the browser tab of the shop and of this admin panel. If empty, the browser default is used. Browsers remember the old icon for a while, so a change may take some time to show.'),
                         ]),
                     Section::make('Homepage hero images')
                         ->schema([
@@ -219,6 +235,24 @@ class ManageSettings extends Page
             ->statePath('data');
     }
 
+    // Checks the REAL file (not just its name): only PNG or ICO, not too big in pixels
+    private static function storeFavicon(TemporaryUploadedFile $file): string
+    {
+        $path = $file->getRealPath();
+        $info = @getimagesize($path);
+        $extensions = [IMAGETYPE_PNG => 'png', IMAGETYPE_ICO => 'ico'];
+
+        if ($info === false || ! isset($extensions[$info[2]])) {
+            throw ValidationException::withMessages(['data.site_favicon' => 'Only PNG or ICO files are allowed.']);
+        }
+
+        if ($info[0] > self::FAVICON_MAX_SIDE || $info[1] > self::FAVICON_MAX_SIDE) {
+            throw ValidationException::withMessages(['data.site_favicon' => 'This icon is too big in pixels (max ' . self::FAVICON_MAX_SIDE . ' x ' . self::FAVICON_MAX_SIDE . '). Please make it smaller.']);
+        }
+
+        return (string) Storage::disk('public')->putFileAs('branding', $file, Str::uuid() . '.' . $extensions[$info[2]]);
+    }
+
     public function save(): void
     {
         $data = $this->form->getState();
@@ -234,20 +268,22 @@ class ManageSettings extends Page
         Setting::put('hero_images', $new ? json_encode($new, JSON_UNESCAPED_SLASHES) : null);
         Setting::put('hero_image', $new[0] ?? null);
 
-        // Logo: a replaced or removed logo is deleted from disk
-        $logo = $data['site_logo'] ?? null;
+        // Logo and favicon: a replaced or removed file is deleted from disk
+        foreach (['site_logo', 'site_favicon'] as $key) {
+            $file = $data[$key] ?? null;
 
-        if (is_array($logo)) {
-            $logo = array_values($logo)[0] ?? null;
+            if (is_array($file)) {
+                $file = array_values($file)[0] ?? null;
+            }
+
+            $oldFile = Setting::get($key);
+
+            if ($oldFile && $oldFile !== $file) {
+                Storage::disk('public')->delete($oldFile);
+            }
+
+            Setting::put($key, is_string($file) && $file !== '' ? $file : null);
         }
-
-        $oldLogo = Setting::get('site_logo');
-
-        if ($oldLogo && $oldLogo !== $logo) {
-            Storage::disk('public')->delete($oldLogo);
-        }
-
-        Setting::put('site_logo', is_string($logo) && $logo !== '' ? $logo : null);
 
         foreach (array_merge(self::TEXT_KEYS, array_keys(Setting::HERO_DEFAULTS)) as $key) {
             $value = $data[$key] ?? null;

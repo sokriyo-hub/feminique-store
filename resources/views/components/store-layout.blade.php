@@ -5,6 +5,7 @@
     $facebook = $safeUrl($settings['facebook_url'] ?? null);
     $instagram = $safeUrl($settings['instagram_url'] ?? null);
     $logo = trim((string) ($settings['site_logo'] ?? ''));
+    $favicon = trim((string) ($settings['site_favicon'] ?? ''));
 
     // Top strip: default text until the admin saves their own; empty text hides the strip
     $topStrip = array_key_exists('top_strip_text', $settings)
@@ -25,6 +26,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ? $title . ' | Feminique' : 'Feminique' }}</title>
     <meta name="description" content="{{ $description ?: __('Elegant jewellery and accessories for women.') }}">
+        @if ($favicon !== '')
+        <link rel="icon" href="{{ asset('storage/' . $favicon) }}">
+    @endif
     <script>document.documentElement.classList.add('js');</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\Setting;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -18,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Throwable;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -38,6 +40,18 @@ HTML;
         return new HtmlString(str_replace('__URL__', e(url('/admin')), $html));
     }
 
+    // Favicon from Settings (null = Filament default). Never breaks the panel if the database is not ready.
+    private static function faviconUrl(): ?string
+    {
+        try {
+            $path = trim((string) Setting::get('site_favicon'));
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $path !== '' ? asset('storage/' . $path) : null;
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -46,6 +60,7 @@ HTML;
             ->path('admin')
             ->login()
             ->brandName('Feminique')
+            ->favicon(fn (): ?string => self::faviconUrl())
             ->colors([
                 'primary' => Color::Amber,
             ])

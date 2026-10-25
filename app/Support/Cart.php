@@ -4,12 +4,23 @@ namespace App\Support;
 
 use App\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cookie;
 
 class Cart
 {
     // ভুল/অস্বাভাবিক সংখ্যা ঠেকানোর জন্য (stock-ই আসল সীমা)
     private const SANITY_MAX = 1000;
 
+    // cart-এর আলাদা cookie (admin session-এর সাথে এর সম্পর্ক নেই)
+    private const COOKIE = 'fq_cart';
+
+    // cart কত দিন মনে থাকবে
+    public const DAYS = 30;
+
+    // cookie-র আকার ছোট রাখতে: সর্বোচ্চ কয়টা আলাদা লাইন
+    public const MAX_LINES = 40;
+
+    // পুরনো session-এ থাকা cart (শুধু cookie-তে সরানোর সময় পড়া হয়)
     private const KEY = 'cart_v2';
     private const OLD_KEY = 'cart';
 
@@ -29,42 +40,80 @@ class Cart
         return [(int) $m[1], (int) ($m[2] ?? 0)];
     }
 
-    // [key => quantity], visitor-এর session-এ থাকে
+    // cookie-র লেখা -> array (ভুল হলে null)
+    private static function decode(mixed $value): ?array
+    {
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+
+        $data = json_decode($value, true);
+
+        return is_array($data) ? $data : null;
+    }
+
+    // cookie-তে সেভ (খালি হলে cookie মুছে দেয়). একই request-এ লিখে আবার পড়লেও নতুন মান পাওয়া যায়।
+    private static function save(array $cart): void
+    {
+        if (! $cart) {
+            Cookie::queue(Cookie::forget(self::COOKIE));
+
+            return;
+        }
+
+        Cookie::queue(self::COOKIE, json_encode($cart), self::DAYS * 24 * 60);
+    }
+
+    // [key => quantity], visitor-এর cookie-তে থাকে
     public static function raw(): array
     {
-        $stored = session(self::KEY);
-        $migrated = false;
+        $stored = null;
 
-        // পুরনো ফরম্যাট ([product_id => qty]) নতুন ফরম্যাটে রূপান্তর
+        // এই request-এই আগে লেখা হয়ে থাকলে সেটাই সবচেয়ে নতুন
+        $queued = Cookie::queued(self::COOKIE);
+
+        if ($queued !== null) {
+            $stored = self::decode($queued->getValue()) ?? [];
+        } else {
+            $stored = self::decode(request()->cookie(self::COOKIE));
+        }
+
+        $fromSession = false;
+
+        // cookie নেই: পুরনো session cart থাকলে সেখান থেকে নেওয়া (একবারই)
         if ($stored === null) {
             $stored = [];
-            $old = session(self::OLD_KEY);
+            $fromSession = true;
+            $sessionCart = session(self::KEY);
+            $oldCart = session(self::OLD_KEY);
 
-            if (is_array($old)) {
-                foreach ($old as $id => $qty) {
+            if (is_array($sessionCart)) {
+                $stored = $sessionCart;
+            } elseif (is_array($oldCart)) {
+                foreach ($oldCart as $id => $qty) {
                     $stored[self::key((int) $id, 0)] = $qty;
                 }
             }
-
-            $migrated = true;
         }
 
         $clean = [];
 
-        if (is_array($stored)) {
-            foreach ($stored as $key => $qty) {
-                $parsed = self::parseKey((string) $key);
-                $qty = (int) $qty;
+        foreach ($stored as $key => $qty) {
+            $parsed = self::parseKey((string) $key);
+            $qty = (int) $qty;
 
-                if ($parsed && $parsed[0] > 0 && $qty > 0) {
-                    $clean[self::key($parsed[0], $parsed[1])] = min($qty, self::SANITY_MAX);
-                }
+            if ($parsed && $parsed[0] > 0 && $qty > 0) {
+                $clean[self::key($parsed[0], $parsed[1])] = min($qty, self::SANITY_MAX);
+            }
+
+            if (count($clean) >= self::MAX_LINES) {
+                break;
             }
         }
 
-        if ($migrated) {
-            session([self::KEY => $clean]);
-            session()->forget(self::OLD_KEY);
+        if ($fromSession && $clean) {
+            self::save($clean);
+            session()->forget([self::KEY, self::OLD_KEY]);
         }
 
         return $clean;
@@ -88,8 +137,13 @@ class Cart
         $cart = self::raw();
         $key = self::key($productId, $variantId);
 
+        // নতুন লাইন, কিন্তু cart ভরা: যোগ হয় না
+        if (! isset($cart[$key]) && count($cart) >= self::MAX_LINES) {
+            return;
+        }
+
         $cart[$key] = min(($cart[$key] ?? 0) + $quantity, self::SANITY_MAX);
-        session([self::KEY => $cart]);
+        self::save($cart);
     }
 
     // ঠিক এই সংখ্যা বসায় (০ বা কম হলে সরিয়ে দেয়)
@@ -107,20 +161,20 @@ class Cart
             $cart[$key] = min($quantity, self::SANITY_MAX);
         }
 
-        session([self::KEY => $cart]);
+        self::save($cart);
     }
 
     public static function remove(string $key): void
     {
         $cart = self::raw();
         unset($cart[$key]);
-        session([self::KEY => $cart]);
+        self::save($cart);
     }
 
     public static function clear(): void
     {
-        session()->forget(self::KEY);
-        session()->forget(self::OLD_KEY);
+        self::save([]);
+        session()->forget([self::KEY, self::OLD_KEY]);
     }
 
     // "Gold Ring (Size: 7, Color: Gold)"
@@ -208,7 +262,7 @@ class Cart
         }
 
         if (count($kept) !== count($raw)) {
-            session([self::KEY => $kept]);
+            self::save($kept);
         }
 
         return $lines;
@@ -245,7 +299,7 @@ class Cart
         }
 
         if ($messages) {
-            session([self::KEY => $cart]);
+            self::save($cart);
         }
 
         return $messages;
