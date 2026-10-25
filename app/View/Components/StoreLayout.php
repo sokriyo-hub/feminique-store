@@ -2,8 +2,10 @@
 
 namespace App\View\Components;
 
+use App\Models\Campaign;
 use App\Models\Page;
 use App\Models\Setting;
+use App\Support\CampaignPricing;
 use App\Support\Cart;
 use App\Support\CategoryTree;
 use Illuminate\Contracts\View\View;
@@ -20,6 +22,9 @@ class StoreLayout extends Component
 
     // Only the main categories chosen for the top menu (desktop)
     public array $navMenu;
+
+    // The running campaign that has "Show in the top menu" on (null = no link)
+    public ?Campaign $offer;
 
     public Collection $policyPages;
 
@@ -40,6 +45,7 @@ class StoreLayout extends Component
             0,
             self::NAVBAR_MAX
         );
+        $this->offer = CampaignPricing::menuOffer();
         $this->policyPages = Page::orderBy('id')->get(['id', 'title', 'slug']);
         $this->settings = Setting::pluck('value', 'name')->all();
         $this->cartCount = Cart::count();

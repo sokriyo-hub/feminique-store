@@ -27,6 +27,7 @@ class EditCampaign extends EditRecord
         $data['category_ids'] = $this->record->categories()->pluck('categories.id')->all();
         $data['product_ids'] = $this->record->products()->pluck('products.id')->all();
         $data['banner_slots'] = $this->record->bannerSlots();
+        $data['offer_link'] = $this->record->offerUrl();
 
         return $data;
     }

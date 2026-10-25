@@ -85,7 +85,7 @@
                     @endif
 
                     @if ($button !== '')
-                        <a href="#collections"
+                        <a href="{{ $campaign->bannerLink() }}"
                            class="inline-flex items-center gap-3 rounded-full border border-ivory bg-ivory px-6 py-2.5 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-transparent hover:text-ivory">
                             {{ $button }}
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M15 6l6 6-6 6"/></svg>

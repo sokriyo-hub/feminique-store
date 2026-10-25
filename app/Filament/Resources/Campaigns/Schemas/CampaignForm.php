@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Campaigns\Schemas;
 
+use App\Models\Ad;
 use App\Models\Campaign;
 use App\Models\Product;
 use App\Support\AdSlots;
@@ -100,12 +101,36 @@ class CampaignForm
                             ->visible(fn (Get $get): bool => ! $get('all_products'))
                             ->required(fn (Get $get): bool => ! $get('all_products') && blank($get('category_ids')))
                             ->placeholder('Type a product name or SKU')
-                            ->helperText('Up to ' . self::MAX_PRODUCTS . ' products. Type to search.')
+                            ->helperText('Up to ' . self::MAX_PRODUCTS . ' products, from any categories. Type to search. Customers see all of them together on the offer page of this campaign.')
                             ->columnSpanFull(),
                         Toggle::make('free_delivery')
                             ->label('Free delivery during this campaign')
                             ->default(false)
                             ->helperText('Applies to EVERY order placed while the campaign runs, even if the discount covers only some products.')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Offer page')
+                    ->description('Every campaign gets its own page that lists only the products this discount covers. The banner button opens it. You can also add a link to it in the top menu.')
+                    ->columns(2)
+                    ->columnSpanFull()
+                    ->schema([
+                        Toggle::make('offer_in_menu')
+                            ->label('Show in the top menu')
+                            ->default(false)
+                            ->helperText('Only while the campaign is running. If several campaigns have this on, the one with the biggest discount is shown.'),
+                        TextInput::make('offer_title')
+                            ->label('Offer title (catchy)')
+                            ->maxLength(60)
+                            ->placeholder('Festive Offers')
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
+                            ->helperText('Used as the menu name and the heading of the offer page. If empty: the menu says "Offers" and the heading is the campaign name.'),
+                        TextInput::make('offer_link')
+                            ->label('Offer page link')
+                            ->readOnly()
+                            ->dehydrated(false)
+                            ->visible(fn (?Campaign $record): bool => filled($record?->slug))
+                            ->helperText('The page of this campaign. You can use this link in an ad or anywhere else. It does not change when you rename the campaign.')
                             ->columnSpanFull(),
                     ]),
 
@@ -171,7 +196,19 @@ class CampaignForm
                             ->label('Button text')
                             ->maxLength(40)
                             ->placeholder('Shop now')
-                            ->helperText('The button scrolls down to the categories (home page). Leave empty for no button, especially if the banner is not on the home page.')
+                            ->helperText('Leave empty for no button.')
+                            ->columnSpanFull(),
+                        TextInput::make('banner_link')
+                            ->label('Button link (optional)')
+                            ->maxLength(255)
+                            ->placeholder('/category/rings   or   https://...')
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim((string) $state) : null)
+                            ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                                if (filled($value) && ! Ad::isSafeLink(trim((string) $value))) {
+                                    $fail('Use a full link starting with https:// or http://, or a page of this site starting with / (for example /category/rings).');
+                                }
+                            })
+                            ->helperText('Where the button goes. Leave empty to open the offer page of this campaign.')
                             ->columnSpanFull(),
                         FileUpload::make('banner_image')
                             ->label('Banner image (optional)')

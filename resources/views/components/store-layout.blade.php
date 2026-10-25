@@ -73,85 +73,135 @@
                     @endif
                 </a>
 
-                {{-- Desktop menu: only the categories chosen in admin. Hover opens the sub-categories. --}}
-                @if (count($navMenu) > 0)
+                               {{-- Desktop menu: only the categories chosen in admin. Hover opens the sub-categories.
+                     The running offer (if switched on) sits in the middle, just above the categories. --}}
+                @if (count($navMenu) > 0 || $offer)
                     <nav class="hidden min-w-0 xl:block" aria-label="{{ __('Categories') }}">
-                        <ul class="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 2xl:gap-x-10">
-                            @foreach ($navMenu as $node)
-                                @php
-                                    $kids = $node['children'];
-                                    // The last items open their side fly-out to the left, so it never leaves the screen
-                                    $flyLeft = $loop->iteration >= 4;
-                                @endphp
-                                <li class="relative"
-                                    @if (count($kids))
-                                        x-data="{ hover: false }"
-                                        @mouseenter="hover = true; menuHover = true"
-                                        @mouseleave="hover = false; menuHover = false"
-                                        @focusin="hover = true; menuHover = true"
-                                        @focusout="if (! $el.contains($event.relatedTarget)) { hover = false; menuHover = false }"
-                                        @keydown.escape="hover = false; menuHover = false"
-                                    @endif>
-                                    <a href="{{ route('category.show', $node['slug']) }}"
-                                       class="nav-link inline-flex items-center gap-1.5 text-[0.9375rem] font-medium tracking-wide text-cocoa"
-                                       @if (request()->is('category/' . $node['slug'])) aria-current="page" @endif>
-                                        {{ $node['name'] }}
+
+                        @if ($offer)
+                            <a href="{{ $offer->offerUrl() }}"
+                               class="mx-auto mb-2 flex w-fit items-center justify-center gap-3 text-[0.6875rem] uppercase tracking-[0.25em] text-mocha transition-colors hover:text-cocoa"
+                               @if (request()->is('offers/' . $offer->slug)) aria-current="page" @endif
+                               x-data="{
+                                   showClock: {{ $offer->show_countdown ? 'true' : 'false' }},
+                                   end: {{ $offer->ends_at->getTimestamp() * 1000 }},
+                                   skew: {{ now()->getTimestamp() * 1000 }} - Date.now(),
+                                   now: Date.now(),
+                                   init() {
+                                       if (!this.showClock) return;
+                                       this.now = Date.now() + this.skew;
+                                       const timer = setInterval(() => {
+                                           this.now = Date.now() + this.skew;
+                                           if (this.left <= 0) { clearInterval(timer); this.finish(); }
+                                       }, 1000);
+                                   },
+                                   get left() { return Math.max(0, Math.floor((this.end - this.now) / 1000)); },
+                                   get text() {
+                                       const l = this.left;
+                                       const d = Math.floor(l / 86400);
+                                       const h = Math.floor((l % 86400) / 3600);
+                                       const m = Math.floor((l % 3600) / 60);
+                                       const s = l % 60;
+                                       const p = (n) => String(n).padStart(2, '0');
+                                       return (d > 0 ? d + 'd ' : '') + p(h) + 'h ' + p(m) + 'm ' + p(s) + 's';
+                                   },
+                                   finish() {
+                                       try {
+                                           const key = 'fq_campaign_reload';
+                                           if (Date.now() - Number(sessionStorage.getItem(key) || 0) > 15000) {
+                                               sessionStorage.setItem(key, String(Date.now()));
+                                               setTimeout(() => location.reload(), 1500);
+                                           }
+                                       } catch (e) {}
+                                   }
+                               }">
+                                <span class="h-1.5 w-1.5 rounded-full bg-mocha" aria-hidden="true"></span>
+                                <span class="font-medium">{{ $offer->menuLabel() }}</span>
+                                @if ($offer->show_countdown)
+                                    <span class="h-3 w-px bg-cocoa/30" aria-hidden="true"></span>
+                                    <span class="tabular-nums tracking-[0.12em]" role="timer" x-text="text">&nbsp;</span>
+                                @endif
+                            </a>
+                        @endif
+
+                        @if (count($navMenu) > 0)
+                            <ul class="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 2xl:gap-x-10">
+                                @foreach ($navMenu as $node)
+                                    @php
+                                        $kids = $node['children'];
+                                        // The last items open their side fly-out to the left, so it never leaves the screen
+                                        $flyLeft = $loop->iteration >= 4;
+                                    @endphp
+                                    <li class="relative"
                                         @if (count($kids))
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-cocoa/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
-                                        @endif
-                                    </a>
+                                            x-data="{ hover: false }"
+                                            @mouseenter="hover = true; menuHover = true"
+                                            @mouseleave="hover = false; menuHover = false"
+                                            @focusin="hover = true; menuHover = true"
+                                            @focusout="if (! $el.contains($event.relatedTarget)) { hover = false; menuHover = false }"
+                                            @keydown.escape="hover = false; menuHover = false"
+                                        @endif>
+                                        <a href="{{ route('category.show', $node['slug']) }}"
+                                           class="nav-link inline-flex items-center gap-1.5 text-[0.9375rem] font-medium tracking-wide text-cocoa"
+                                           @if (request()->is('category/' . $node['slug'])) aria-current="page" @endif>
+                                            {{ $node['name'] }}
+                                            @if (count($kids))
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-cocoa/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+                                            @endif
+                                        </a>
 
-                                    @if (count($kids))
-                                        {{-- -left-6 = the option text starts exactly under the category name --}}
-                                        <div x-show="hover" x-cloak x-transition.opacity.duration.200ms
-                                             class="absolute -left-6 top-full z-50 pt-5">
-                                            <div class="relative">
-                                                {{-- Glass is a separate layer, so the side fly-out can have its own blur --}}
-                                                <div class="pointer-events-none absolute inset-0 rounded-2xl {{ $floatBox }}" aria-hidden="true"></div>
+                                        @if (count($kids))
+                                            {{-- -left-6 = the option text starts exactly under the category name --}}
+                                            <div x-show="hover" x-cloak x-transition.opacity.duration.200ms
+                                                 class="absolute -left-6 top-full z-50 pt-5">
+                                                <div class="relative">
+                                                    {{-- Glass is a separate layer, so the side fly-out can have its own blur --}}
+                                                    <div class="pointer-events-none absolute inset-0 rounded-2xl {{ $floatBox }}" aria-hidden="true"></div>
 
-                                                <ul class="relative min-w-[14rem] p-2">
-                                                    @foreach ($kids as $child)
-                                                        @php($grandKids = $child['children'])
-                                                        <li class="relative"
-                                                            @if (count($grandKids))
-                                                                x-data="{ sub: false }"
-                                                                @mouseenter="sub = true"
-                                                                @mouseleave="sub = false"
-                                                                @focusin="sub = true"
-                                                                @focusout="if (! $el.contains($event.relatedTarget)) sub = false"
-                                                            @endif>
-                                                            <a href="{{ route('category.show', $child['slug']) }}" class="{{ $dropLink }}">
-                                                                <span>{{ $child['name'] }}</span>
+                                                    <ul class="relative min-w-[14rem] p-2">
+                                                        @foreach ($kids as $child)
+                                                            @php($grandKids = $child['children'])
+                                                            <li class="relative"
                                                                 @if (count($grandKids))
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-cocoa/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
-                                                                @endif
-                                                            </a>
+                                                                    x-data="{ sub: false }"
+                                                                    @mouseenter="sub = true"
+                                                                    @mouseleave="sub = false"
+                                                                    @focusin="sub = true"
+                                                                    @focusout="if (! $el.contains($event.relatedTarget)) sub = false"
+                                                                @endif>
+                                                                <a href="{{ route('category.show', $child['slug']) }}" class="{{ $dropLink }}">
+                                                                    <span>{{ $child['name'] }}</span>
+                                                                    @if (count($grandKids))
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-cocoa/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+                                                                    @endif
+                                                                </a>
 
-                                                            @if (count($grandKids))
-                                                                <div x-show="sub" x-cloak x-transition.opacity.duration.200ms
-                                                                     class="absolute -top-2 {{ $flyLeft ? 'right-full pr-2' : 'left-full pl-2' }}">
-                                                                    <div class="relative">
-                                                                        <div class="pointer-events-none absolute inset-0 rounded-2xl {{ $floatBox }}" aria-hidden="true"></div>
+                                                                @if (count($grandKids))
+                                                                    <div x-show="sub" x-cloak x-transition.opacity.duration.200ms
+                                                                         class="absolute -top-2 {{ $flyLeft ? 'right-full pr-2' : 'left-full pl-2' }}">
+                                                                        <div class="relative">
+                                                                            <div class="pointer-events-none absolute inset-0 rounded-2xl {{ $floatBox }}" aria-hidden="true"></div>
 
-                                                                        <ul class="relative min-w-[14rem] p-2">
-                                                                            @foreach ($grandKids as $grandChild)
-                                                                                <li>
-                                                                                    <a href="{{ route('category.show', $grandChild['slug']) }}" class="{{ $dropLink }}">{{ $grandChild['name'] }}</a>
-                                                                                </li>
-                                                                            @endforeach
-                                                                        </ul>
+                                                                            <ul class="relative min-w-[14rem] p-2">
+                                                                                @foreach ($grandKids as $grandChild)
+                                                                                    <li>
+                                                                                        <a href="{{ route('category.show', $grandChild['slug']) }}" class="{{ $dropLink }}">{{ $grandChild['name'] }}</a>
+                                                                                    </li>
+                                                                                @endforeach
+                                                                            </ul>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            @endif
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
+                                                                @endif
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
                                             </div>
-                                        </div>
-                                    @endif
-                                </li>
-                            @endforeach
-                        </ul>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
                     </nav>
                 @else
                     <div class="hidden xl:block"></div>
@@ -206,6 +256,14 @@
                     @foreach ($menu as $node)
                         @include('partials.mobile-menu-node', ['node' => $node, 'level' => 0])
                     @endforeach
+                    
+                    
+                    @if ($offer)
+                        <li class="border-b border-taupe/20">
+                            <a href="{{ $offer->offerUrl() }}" class="block py-4 text-mocha">{{ $offer->menuLabel() }}</a>
+                        </li>
+                    @endif
+                    
                     <li>
                         <a href="{{ route('track') }}" class="flex items-center gap-3 py-4 text-cocoa">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">

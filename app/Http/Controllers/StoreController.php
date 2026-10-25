@@ -9,6 +9,8 @@ use App\Models\Setting;
 use App\Support\Popular;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use App\Models\Campaign;
+use App\Support\CampaignPricing;
 
 class StoreController
 {
@@ -57,6 +59,23 @@ class StoreController
             : route('home');
 
         return view('category', compact('category', 'children', 'products', 'popular', 'backUrl'));
+    }
+        // Offer page of one campaign: only the products its discount covers
+    public function offer(string $slug): View
+    
+    {
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        $running = $campaign->status() === 'running';
+
+        $products = $running
+            ? CampaignPricing::productQueryFor($campaign)
+                ->with(['images', 'variants'])
+                ->latest()
+                ->orderByDesc('id')
+                ->paginate(12)
+            : Product::whereRaw('1 = 0')->paginate(12);
+
+        return view('offer', compact('campaign', 'running', 'products'));
     }
 
     public function product(string $slug): View

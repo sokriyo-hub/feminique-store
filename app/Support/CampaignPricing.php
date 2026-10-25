@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -80,6 +82,33 @@ class CampaignPricing
             ->sort(fn (Campaign $a, Campaign $b): int => ($b->discount_percent <=> $a->discount_percent)
                 ?: ($a->ends_at->getTimestamp() <=> $b->ends_at->getTimestamp()))
             ->first();
+    }
+
+    // The campaign shown in the top menu (running + "Show in the top menu" on). Biggest discount wins.
+    public static function menuOffer(): ?Campaign
+    {
+        return self::active()
+            ->filter(fn (Campaign $campaign): bool => $campaign->offer_in_menu)
+            ->sort(fn (Campaign $a, Campaign $b): int => ($b->discount_percent <=> $a->discount_percent)
+                ?: ($a->ends_at->getTimestamp() <=> $b->ends_at->getTimestamp()))
+            ->first();
+    }
+
+    // The products a campaign covers (for its offer page): all, or chosen categories (+ below) and chosen products
+    public static function productQueryFor(Campaign $campaign): Builder
+    {
+        $query = Product::query();
+
+        if ($campaign->all_products) {
+            return $query;
+        }
+
+        $categoryIds = array_keys(self::covered($campaign));
+        $productIds = $campaign->products()->pluck('products.id')->map(fn ($id) => (int) $id)->all();
+
+        return $query->where(function (Builder $q) use ($categoryIds, $productIds): void {
+            $q->whereIn('category_id', $categoryIds)->orWhereIn('id', $productIds);
+        });
     }
 
     // [productId => index] of the products chosen one by one

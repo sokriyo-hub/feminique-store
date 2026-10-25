@@ -12,6 +12,10 @@ Route::get('/category/{slug}', [StoreController::class, 'category'])
     ->where('slug', '[A-Za-z0-9_-]+')
     ->name('category.show');
 
+Route::get('/offers/{slug}', [StoreController::class, 'offer'])
+    ->where('slug', '[A-Za-z0-9_-]+')
+    ->name('offer.show');
+    
 Route::get('/product/{slug}', [StoreController::class, 'product'])
     ->where('slug', '[A-Za-z0-9_-]+')
     ->name('product.show');
