@@ -9,10 +9,13 @@ use App\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Models\Order;
 use App\Support\OrderStock;
 use BackedEnum;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -27,7 +30,7 @@ class OrderResource extends Resource
 
     protected static ?int $navigationSort = 10;
 
-    // admin নতুন order বানাতে পারবে না (order আসবে customer-এর কাছ থেকে)
+    // admin নতুন order বানাতে পারবে না এখানে (Order desk পেজ থেকে বানাবে)
     public static function canCreate(): bool
     {
         return false;
@@ -56,10 +59,37 @@ class OrderResource extends Resource
         return OrdersTable::configure($table);
     }
 
+    // "Why was it returned?" + note. $visible = when to show them (null = always shown and required)
+    public static function returnFields(?Closure $visible = null): array
+    {
+        $reason = Select::make('return_reason')
+            ->label('Why was it returned?')
+            ->options(Order::returnReasonGroups())
+            ->native(false)
+            ->helperText('A customer-side reason counts toward the red flag of the mobile number. A reason that is not the customer\'s fault (damaged product, wrong item ...) never counts.');
+
+        $note = Textarea::make('return_note')
+            ->label('Note (optional)')
+            ->rows(2)
+            ->maxLength(500);
+
+        if ($visible) {
+            $reason->visible($visible)->required($visible);
+            $note->visible($visible);
+        } else {
+            $reason->required();
+        }
+
+        return [$reason, $note];
+    }
+
     // status বদলানোর বোতাম (তালিকা ও details পেজ দুই জায়গায় ব্যবহার হয়)
-    // Cancelled = stock ফেরে (একবারই). Cancelled থেকে আবার চালু = stock আবার কাটে (কম থাকলে আটকায়).
+    // Cancelled = stock ফেরে (একবারই). Returned = কারণ লাগে + admin প্রতিবার বাছে stock ফিরবে কিনা.
+    // Cancelled/Returned থেকে আবার চালু = stock আবার কাটে (কম থাকলে আটকায়).
     public static function changeStatusAction(): Action
     {
+        $isReturned = fn (Get $get): bool => $get('status') === 'returned';
+
         return Action::make('changeStatus')
             ->label('Change status')
             ->icon(Heroicon::OutlinedArrowPath)
@@ -68,10 +98,34 @@ class OrderResource extends Resource
                 Select::make('status')
                     ->options(Order::statusOptions())
                     ->required()
-                    ->native(false),
+                    ->native(false)
+                    ->live(),
+                ...self::returnFields($isReturned),
+                Select::make('restock')
+                    ->label('What happens to the returned pieces?')
+                    ->options([
+                        'yes' => 'They are in good condition: add them back to stock',
+                        'no' => 'Damaged or lost: do not add them back',
+                    ])
+                    ->native(false)
+                    ->visible($isReturned)
+                    ->required($isReturned)
+                    ->helperText('You choose this every time. (If this order was not holding any stock, the choice changes nothing.)'),
             ])
             ->action(function (array $data, Order $record): void {
-                $error = OrderStock::changeStatus($record, $data['status']);
+                $returned = $data['status'] === 'returned';
+
+                $restock = ($returned && filled($data['restock'] ?? null))
+                    ? $data['restock'] === 'yes'
+                    : null;
+
+                $error = OrderStock::changeStatus(
+                    $record,
+                    $data['status'],
+                    $restock,
+                    $returned ? ($data['return_reason'] ?? null) : null,
+                    $returned ? ($data['return_note'] ?? null) : null,
+                );
 
                 if ($error !== null) {
                     Notification::make()

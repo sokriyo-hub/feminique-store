@@ -10,20 +10,30 @@ use Illuminate\Support\Facades\DB;
 /**
  * Order status change + stock:
  * - to Cancelled: stock goes back (only once, controlled by orders.stock_deducted)
- * - Cancelled to active again: stock is taken again (blocked if there is not enough)
+ * - to Returned: a reason is required, and the admin chooses every time: pieces go back to stock, or not
+ * - Cancelled or Returned to active again: stock is taken again if it was put back (blocked if not enough)
  */
 class OrderStock
 {
     /**
+     * $restock is only needed when an active order becomes Returned:
+     * true = the pieces are fine and go back to stock, false = they do not.
+     * $reason (a key of Order::returnReasonOptions()) is always needed for Returned.
+     *
      * Returns null on success, or an error message (then NOTHING was changed).
      */
-    public static function changeStatus(Order $order, string $newStatus): ?string
-    {
+    public static function changeStatus(
+        Order $order,
+        string $newStatus,
+        ?bool $restock = null,
+        ?string $reason = null,
+        ?string $note = null,
+    ): ?string {
         if (! in_array($newStatus, Order::STATUSES, true)) {
             return 'Unknown status.';
         }
 
-        return DB::transaction(function () use ($order, $newStatus): ?string {
+        return DB::transaction(function () use ($order, $newStatus, $restock, $reason, $note): ?string {
             $locked = Order::with('items')->lockForUpdate()->find($order->id);
 
             if (! $locked) {
@@ -34,13 +44,25 @@ class OrderStock
                 return null;
             }
 
-            $cancelling = $newStatus === 'cancelled';
-            $reactivating = $locked->status === 'cancelled' && ! $cancelling;
+            if ($newStatus === 'returned' && ! array_key_exists((string) $reason, Order::returnReasonOptions())) {
+                return 'Choose why the order was returned.';
+            }
 
-            if ($cancelling && $locked->stock_deducted) {
-                self::restore($locked);
-                $locked->stock_deducted = false;
-            } elseif ($reactivating && ! $locked->stock_deducted) {
+            $inactive = ['cancelled', 'returned'];
+            $toInactive = in_array($newStatus, $inactive, true);
+            $fromInactive = in_array($locked->status, $inactive, true);
+
+            if ($toInactive && ! $fromInactive && $locked->stock_deducted) {
+                if ($newStatus === 'returned' && $restock === null) {
+                    return 'Choose what happens to the returned pieces: add them back to stock, or not.';
+                }
+
+                // Cancelled: always back. Returned: only when the admin said the pieces are fine.
+                if ($newStatus === 'cancelled' || $restock === true) {
+                    self::restore($locked);
+                    $locked->stock_deducted = false;
+                }
+            } elseif (! $toInactive && $fromInactive && ! $locked->stock_deducted) {
                 $error = self::deduct($locked);
 
                 if ($error !== null) {
@@ -50,7 +72,21 @@ class OrderStock
                 $locked->stock_deducted = true;
             }
 
+            $wasReturned = $locked->status === 'returned';
+
             $locked->status = $newStatus;
+
+            if ($newStatus === 'returned') {
+                $locked->return_reason = $reason;
+                $locked->return_note = filled($note) ? mb_substr(trim((string) $note), 0, 500) : null;
+                $locked->returned_at = now();
+            } elseif ($wasReturned) {
+                // It is not a return any more: forget the reason so it can never be counted
+                $locked->return_reason = null;
+                $locked->return_note = null;
+                $locked->returned_at = null;
+            }
+
             $locked->save();
 
             return null;

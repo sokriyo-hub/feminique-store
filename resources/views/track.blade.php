@@ -56,12 +56,12 @@
                 </div>
 
                 {{-- Status --}}
-                @if ($order->status === 'cancelled')
+                @if (in_array($order->status, ['cancelled', 'returned'], true))
                     <div class="mt-10 text-center">
                         <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-mocha text-mocha">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
                         </span>
-                        <p class="mt-4 text-sm text-mocha">{{ __('This order was cancelled.') }}</p>
+                        <p class="mt-4 text-sm text-mocha">{{ $order->status === 'returned' ? __('This order was returned.') : __('This order was cancelled.') }}</p>
                     </div>
                 @else
                     <ol class="mt-12 grid grid-cols-4 text-center">

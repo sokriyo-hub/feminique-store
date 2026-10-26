@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Support\AdminOrderCreator;
 use App\Support\Phone;
+use App\Support\ReturnGuard;
 use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
@@ -79,6 +80,9 @@ class OrderDesk extends Page
                                 ->required()
                                 ->maxLength(20)
                                 ->placeholder('01XXXXXXXXX')
+                                ->live(onBlur: true)
+                                ->hint(fn (Get $get): ?string => ReturnGuard::warningFor((string) $get('phone')))
+                                ->hintColor('danger')
                                 ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
                                     if (Phone::normalize((string) $value) === null) {
                                         $fail('Enter a valid mobile number, like 01712345678.');
@@ -236,7 +240,11 @@ class OrderDesk extends Page
             ->body('Order code: ' . $order->code . '. The customer can track it with this code and the mobile number.')
             ->persistent()
             ->send();
+        $warning = ReturnGuard::warningFor($order->phone);
 
+        if ($warning !== null) {
+            Notification::make()->warning()->title('Check this customer')->body($warning)->persistent()->send();
+        }
         $this->redirect(OrderResource::getUrl('view', ['record' => $order]));
     }
 

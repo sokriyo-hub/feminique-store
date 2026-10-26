@@ -51,6 +51,7 @@ class ManageSettings extends Page
         'instagram_url',
         'free_delivery_threshold',
         'low_stock_threshold',
+        'return_flag_limit',
     ];
 
     // Text shown in the top strip until the admin saves their own
@@ -80,7 +81,7 @@ class ManageSettings extends Page
             : self::DEFAULT_TOP_STRIP;
 
         $values['low_stock_threshold'] = Setting::get('low_stock_threshold', self::DEFAULT_LOW_STOCK);
-
+        $values['return_flag_limit'] = Setting::get('return_flag_limit', '3');
         foreach (array_keys(Setting::HERO_DEFAULTS) as $key) {
             $values[$key] = Setting::valueOrDefault($key);
         }
@@ -209,6 +210,17 @@ class ManageSettings extends Page
                                 ->minValue(0)
                                 ->prefix('Tk')
                                 ->helperText('Orders at or above this amount get free delivery. Leave empty to turn this off.'),
+                        ]),
+                                        Section::make('Fake order protection')
+                        ->schema([
+                            TextInput::make('return_flag_limit')
+                                ->label('Red flag after this many returned orders')
+                                ->numeric()
+                                ->integer()
+                                ->minValue(1)
+                                ->maxValue(100)
+                                ->placeholder('3')
+                                ->helperText('When one mobile number has this many "Returned" orders, a red flag shows in the Orders list and on the order. Use 1, 2, 3 or more. Leave empty to use 3. Blocking a number is always your own decision.'),
                         ]),
                     Section::make('Stock alerts')
                         ->schema([

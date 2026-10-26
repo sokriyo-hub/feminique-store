@@ -10,6 +10,7 @@ use App\Support\CampaignPricing;
 use App\Support\Cart;
 use App\Support\Delivery;
 use App\Support\Phone;
+use App\Support\ReturnGuard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -91,6 +92,16 @@ class CheckoutController
             ? $zones->first()
             : $zones->firstWhere('id', (int) $data['zone_id']);
 
+        // A blocked mobile number cannot order online (polite message, the reason is never shown)
+        $blockedMessage = ReturnGuard::checkoutMessage((string) $data['phone']);
+
+        if ($blockedMessage !== null) {
+            return back()->withInput()->withErrors(['phone' => $blockedMessage]);
+        }
+
+        // For the admin only (shown on the order details, never used to block anybody)
+        $ip = substr((string) $request->ip(), 0, 45);    
+
         // The total the customer saw on the checkout page (null = an old form without it)
         $seen = isset($data['seen_total']) ? (float) $data['seen_total'] : null;
 
@@ -98,7 +109,7 @@ class CheckoutController
          * Transaction: stock সারিগুলো lock করে আবার যাচাই, তারপর order বানানো ও stock কমানো।
          * ফেরত: Order (সফল) | false (stock কম) | 'changed' (দাম বদলেছে) | null (cart খালি)
          */
-        $order = DB::transaction(function () use ($zone, $data, $seen) {
+        $order = DB::transaction(function () use ($zone, $data, $seen, $ip) {
             $parsed = [];
 
             foreach (Cart::raw() as $key => $quantity) {
@@ -187,6 +198,7 @@ class CheckoutController
                 'delivery_charge' => $charge,
                 'total' => $total,
                 'status' => 'pending',
+                'ip_address' => $ip !== '' ? $ip : null,
                 'stock_deducted' => true,
             ]);
 

@@ -33,7 +33,7 @@ class OrderStatusChart extends ChartWidget
             'datasets' => [[
                 'label' => 'Orders',
                 'data' => array_map(fn (string $s): int => (int) ($counts[$s] ?? 0), $statuses),
-                'backgroundColor' => ['#F59E0B', '#38BDF8', '#A58263', '#22C55E', '#EF4444'],
+                'backgroundColor' => ['#F59E0B', '#38BDF8', '#A58263', '#22C55E', '#EF4444', '#6B7280'],
             ]],
             'labels' => array_map(fn (string $s): string => $names[$s], $statuses),
         ];
