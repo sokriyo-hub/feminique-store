@@ -23,7 +23,7 @@ Alpine.data('receipt', (code) => ({
 
             const link = document.createElement('a');
             link.href = dataUrl;
-            link.download = 'feminique-order-' + code + '.png';
+            link.download = 'heshelmart-order-' + code + '.png';
             document.body.appendChild(link);
             link.click();
             link.remove();

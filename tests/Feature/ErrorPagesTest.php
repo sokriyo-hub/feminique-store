@@ -38,7 +38,9 @@ class ErrorPagesTest extends TestCase
     // 500 and 503 must not touch the database (it may be the thing that is broken)
     public function test_500_and_503_views_do_not_need_the_database(): void
     {
-        $this->assertStringContainsString('Feminique', view('errors.500')->render());
-        $this->assertStringContainsString('Feminique', view('errors.503')->render());
+        $name = config('app.name');
+
+        $this->assertStringContainsString($name, view('errors.500')->render());
+        $this->assertStringContainsString($name, view('errors.503')->render());
     }
 }

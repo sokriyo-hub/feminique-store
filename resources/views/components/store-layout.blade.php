@@ -291,7 +291,7 @@
                       @keydown.escape.window="searching = false"
                       class="flex items-center gap-4 px-6 py-4 lg:px-10">
                     <input x-ref="q" type="search" name="q" required maxlength="60" autocomplete="off"
-                           placeholder="{{ __('Search jewellery') }}"
+                           placeholder="{{ __('Search products') }}"
                            aria-label="{{ __('Search') }}"
                            class="min-w-0 flex-1 border-0 border-b border-taupe/60 bg-transparent py-2 font-serif text-xl text-cocoa placeholder:text-cocoa/40 focus:border-cocoa focus:outline-none focus:ring-0 lg:text-2xl">
                     <button type="submit" class="p-1 text-cocoa transition-colors hover:text-mocha" aria-label="{{ __('Search') }}">
@@ -387,7 +387,7 @@
         </div>
 
         <div class="border-t border-ivory/15 px-6 py-6 text-center text-xs tracking-wide text-ivory/60">
-            &copy; {{ date('Y') }} Feminique. {{ __('All rights reserved.') }}
+            &copy; {{ date('Y') }} {{ $brandName }}. {{ __('All rights reserved.') }}
         </div>
     </footer>
 

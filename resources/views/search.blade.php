@@ -15,7 +15,7 @@
             {{-- Search again --}}
             <form action="{{ route('search') }}" method="GET" role="search" class="mx-auto mt-10 flex max-w-xl items-center gap-4">
                 <input type="search" name="q" value="{{ $term }}" required maxlength="60" autocomplete="off"
-                       placeholder="{{ __('Search jewellery') }}"
+                       placeholder="{{ __('Search products') }}"
                        aria-label="{{ __('Search') }}"
                        class="min-w-0 flex-1 border-0 border-b border-taupe/60 bg-transparent py-2 text-center font-serif text-xl text-cocoa placeholder:text-cocoa/40 focus:border-cocoa focus:outline-none focus:ring-0">
                 <button type="submit" class="border border-cocoa px-6 py-2.5 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">{{ __('Search') }}</button>

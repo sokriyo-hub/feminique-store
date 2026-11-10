@@ -1,6 +1,6 @@
 import Alpine from 'alpinejs';
 
-const KEY = 'feminique_wishlist';
+const KEY = 'heshelmart_wishlist';
 const MAX_ITEMS = 100;
 
 function read() {
