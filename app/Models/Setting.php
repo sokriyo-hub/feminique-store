@@ -10,12 +10,12 @@ class Setting extends Model
 
     // Hero text shown until the admin saves their own (saved as empty = that part is hidden)
     public const HERO_DEFAULTS = [
-        'hero_eyebrow' => 'JEWELRY & ACCESSORIES FOR EVERY YOU',
-        'hero_title' => "Timeless Pieces,\nModern You",
-        'hero_text' => "Elegant jewelry and curated accessories\nto celebrate your style, your story, your moments.",
-        'hero_badge_1' => 'Premium Quality',
-        'hero_badge_2' => 'Fast & Reliable Shipping',
-        'hero_badge_3' => 'Loved by Thousands',
+        'hero_eyebrow' => 'Good Food • Better Living',
+        'hero_title' => "Thoughtful picks for\nyour kitchen and home",
+        'hero_text' => "Everyday kitchen and lifestyle products,\ncarefully chosen and easy to order.",
+        'hero_badge_1' => 'Carefully chosen products',
+        'hero_badge_2' => 'Fast & reliable delivery',
+        'hero_badge_3' => 'Cash on Delivery',
     ];
 
     // একটা setting-এর মান পড়া: Setting::get('footer_phone', 'ডিফল্ট')

@@ -12,7 +12,7 @@
         <div x-ref="card" class="mt-10 bg-ivory px-6 pb-12 pt-8 sm:px-10">
 
             <div class="flex items-baseline justify-between gap-4 border-b border-taupe/30 pb-5">
-                <p class="font-serif text-2xl font-medium uppercase tracking-[0.3em] text-cocoa">Feminique</p>
+                <p class="font-serif text-2xl font-bold text-cocoa">{{ \App\Support\Brand::name() }}</p>
                 <p class="text-xs uppercase tracking-[0.25em] text-cocoa/70">{{ __('Order receipt') }}</p>
             </div>
 
@@ -87,7 +87,7 @@
                     class="border border-cocoa/40 bg-transparent px-8 py-4 text-xs font-medium uppercase tracking-[0.25em] text-cocoa transition duration-500 hover:bg-cocoa hover:text-ivory">{{ __('Save as PDF') }}</button>
         </div>
 
-        <p x-show="failed" x-cloak class="no-print mt-4 text-center text-xs text-mocha" role="alert">{{ __('Could not create the image. Please use "Save as PDF" or take a screenshot.') }}</p>
+        <p x-show="failed" x-cloak class="no-print mt-4 text-center text-xs text-danger" role="alert">{{ __('Could not create the image. Please use "Save as PDF" or take a screenshot.') }}</p>
 
         <div class="no-print mt-10 text-center">
             <a href="{{ route('track') }}" class="nav-link mr-8 inline-block text-xs uppercase tracking-[0.25em] text-cocoa/80 transition-colors hover:text-cocoa">{{ __('Track your order') }}</a>

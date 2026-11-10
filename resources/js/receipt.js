@@ -16,7 +16,7 @@ Alpine.data('receipt', (code) => ({
             const dataUrl = await toPng(card, {
                 pixelRatio: 2,
                 cacheBust: true,
-                backgroundColor: '#E7D9C4',
+                backgroundColor: getComputedStyle(card).backgroundColor,
                 width: card.scrollWidth,
                 height: card.scrollHeight + 8,
             });

@@ -6,6 +6,10 @@
     $instagram = $safeUrl($settings['instagram_url'] ?? null);
     $logo = trim((string) ($settings['site_logo'] ?? ''));
     $favicon = trim((string) ($settings['site_favicon'] ?? ''));
+    $footerLogo = trim((string) ($settings['footer_logo'] ?? ''));
+    $brandName = \App\Support\Brand::name();
+    $tagline = \App\Support\Brand::tagline();
+    $themeColor = \App\Support\Brand::color('brand_color_primary');
 
     // Top strip: default text until the admin saves their own; empty text hides the strip
     $topStrip = array_key_exists('top_strip_text', $settings)
@@ -24,13 +28,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ? $title . ' | Feminique' : 'Feminique' }}</title>
-    <meta name="description" content="{{ $description ?: __('Elegant jewellery and accessories for women.') }}">
+    <title>{{ $title ? $title . ' | ' . $brandName : $brandName . ($tagline !== '' ? ' | ' . $tagline : '') }}</title>
+    <meta name="description" content="{{ $description ?: \App\Support\Brand::description() }}">
+    <meta name="theme-color" content="{{ $themeColor }}">
     @if ($favicon !== '')
         <link rel="icon" href="{{ asset('storage/' . $favicon) }}">
     @endif
     <script>document.documentElement.classList.add('js');</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {!! \App\Support\Brand::styleTag() !!}
 </head>
 <body class="flex min-h-screen flex-col">
 
@@ -65,11 +71,11 @@
                 </div>
 
                 {{-- Logo (image from Settings, or text) --}}
-                <a href="{{ route('home') }}" class="justify-self-center xl:justify-self-start" aria-label="Feminique">
+                <a href="{{ route('home') }}" class="justify-self-center xl:justify-self-start" aria-label="{{ $brandName }}">
                     @if ($logo !== '')
-                        <img src="{{ asset('storage/' . $logo) }}" alt="Feminique" class="h-8 w-auto max-w-[11rem] object-contain lg:h-11 lg:max-w-[15rem]">
+                        <img src="{{ asset('storage/' . $logo) }}" alt="{{ \App\Support\Brand::name() }}" class="h-8 w-auto max-w-[11rem] object-contain lg:h-11 lg:max-w-[15rem]">
                     @else
-                        <span class="-mr-[0.3em] font-serif text-xl font-medium uppercase tracking-[0.3em] text-cocoa sm:text-2xl xl:mr-0 xl:text-3xl xl:tracking-[0.35em]">Feminique</span>
+                        <span class="font-serif text-2xl font-bold text-cocoa xl:text-3xl">{{ $brandName }}</span>
                     @endif
                 </a>
 
@@ -332,8 +338,19 @@
     <footer class="mt-24 bg-cocoa text-ivory">
         <div class="wrap grid gap-14 py-16 lg:grid-cols-[2fr_1fr_1fr]">
             <div>
-                <p class="font-serif text-3xl font-medium uppercase tracking-[0.35em]">Feminique</p>
-                <p class="mt-5 max-w-sm text-sm leading-relaxed text-ivory/70">{{ __('Jewellery and accessories for women.') }}</p>
+                    @if ($footerLogo !== '')
+                    <img src="{{ asset('storage/' . $footerLogo) }}" alt="{{ $brandName }}" class="h-12 w-auto max-w-[16rem] object-contain">
+                @elseif ($logo !== '')
+                    <span class="inline-block rounded-xl bg-white px-4 py-3">
+                    <img src="{{ asset('storage/' . $logo) }}" alt="{{ $brandName }}" class="h-10 w-auto max-w-[14rem] object-contain">
+                    </span>
+                @else
+                    <p class="font-serif text-3xl font-bold text-ivory">{{ $brandName }}</p>
+                @endif
+
+                @if ($tagline !== '')
+                    <p class="mt-5 max-w-sm text-sm leading-relaxed text-ivory/80">{{ $tagline }}</p>
+                @endif
             </div>
 
             <div>

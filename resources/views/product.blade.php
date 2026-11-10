@@ -113,7 +113,7 @@
                              }">
                     @empty
                         <div class="flex h-full w-full items-center justify-center">
-                            <span class="font-serif text-2xl uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
+                            <span class="font-serif text-2xl tracking-wide text-cocoa/40tracking-wide text-cocoa/40">
                         </div>
                     @endforelse
 
@@ -201,7 +201,7 @@
                             @endforeach
                         </div>
 
-                        <p x-show="warn && !variant" x-cloak class="mt-4 text-sm text-mocha" role="alert" x-text="chooseMsg"></p>
+                        <p x-show="warn && !variant" x-cloak class="mt-4 text-sm text-danger" role="alert" x-text="chooseMsg"></p>
                     @endif
 
                     <div class="{{ $product->has_variants ? 'mt-8' : '' }} flex items-center gap-5">

@@ -14,7 +14,7 @@
                      class="h-full w-full object-cover transition duration-[1400ms] ease-out group-hover:scale-[1.05] {{ $soldOut ? 'opacity-50' : '' }}">
             @else
                 <div class="flex h-full w-full items-center justify-center">
-                    <span class="font-serif text-xl uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
+                    <span class="font-serif text-xl tracking-wide text-cocoa/40tracking-wide text-cocoa/40">
                 </div>
             @endif
 

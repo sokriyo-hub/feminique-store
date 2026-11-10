@@ -46,25 +46,25 @@
                     <div>
                         <label for="name" class="{{ $label }}">{{ __('Full name') }}</label>
                         <input id="name" name="name" type="text" value="{{ old('name') }}" required minlength="2" maxlength="100" autocomplete="name" class="{{ $field }}">
-                        @error('name') <p class="mt-2 text-xs text-mocha">{{ $message }}</p> @enderror
+                        @error('name') <p class="mt-2 text-xs text-danger">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="phone" class="{{ $label }}">{{ __('Mobile number') }}</label>
                         <input id="phone" name="phone" type="tel" inputmode="tel" value="{{ old('phone') }}" required maxlength="20" autocomplete="tel" placeholder="01XXXXXXXXX" class="{{ $field }}">
-                        @error('phone') <p class="mt-2 text-xs text-mocha">{{ $message }}</p> @enderror
+                        @error('phone') <p class="mt-2 text-xs text-danger">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="address" class="{{ $label }}">{{ __('Delivery address') }}</label>
                         <textarea id="address" name="address" rows="3" required minlength="5" maxlength="500" autocomplete="street-address" class="{{ $field }} resize-none">{{ old('address') }}</textarea>
-                        @error('address') <p class="mt-2 text-xs text-mocha">{{ $message }}</p> @enderror
+                        @error('address') <p class="mt-2 text-xs text-danger">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="email" class="{{ $label }}">{{ __('Email (optional)') }}</label>
                         <input id="email" name="email" type="email" value="{{ old('email') }}" maxlength="255" autocomplete="email" class="{{ $field }}">
-                        @error('email') <p class="mt-2 text-xs text-mocha">{{ $message }}</p> @enderror
+                        @error('email') <p class="mt-2 text-xs text-danger">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- Delivery zone: একটা zone থাকলে বাক্স দেখানো হয় না --}}
@@ -82,7 +82,7 @@
                                     </label>
                                 @endforeach
                             </div>
-                            @error('zone_id') <p class="mt-2 text-xs text-mocha">{{ $message }}</p> @enderror
+                            @error('zone_id') <p class="mt-2 text-xs text-danger">{{ $message }}</p> @enderror
                         </div>
                     @endif
 

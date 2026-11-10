@@ -3,16 +3,32 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * HeshelMart brand (Brand Kit v1.0).
+ * New names: forest, forest-dark, gold, charcoal, ivory, sage, sand, danger. Use these in new code.
+ * Old names (cocoa, mocha, taupe, beige) are kept and remapped, so the old Blade files keep working:
+ *   cocoa = forest green, mocha = dark green, taupe = gold (borders and dividers), beige = soft sage.
+ * font-serif is remapped to the heading font (Montserrat).
+ */
 @theme {
-    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-    --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Open Sans Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-heading: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
 
-    --color-ivory: #E7D9C4;
-    --color-beige: #D8C2A6;
-    --color-sand: #C6A889;
-    --color-taupe: #A58263;
-    --color-mocha: #7A5A42;
-    --color-cocoa: #4E3727;
+    --color-forest: #07502F;
+    --color-forest-dark: #053D24;
+    --color-gold: #C5A46D;
+    --color-charcoal: #252A27;
+    --color-ivory: #F8F5EC;
+    --color-sage: #E7EEE8;
+    --color-sand: #EFE5D3;
+    --color-danger: #B42318;
+
+    /* old names, remapped */
+    --color-cocoa: #07502F;
+    --color-mocha: #053D24;
+    --color-taupe: #C5A46D;
+    --color-beige: #E7EEE8;
 }
 
 /* সাইটের চওড়া কনটেন্ট-বক্স। rem-এ রাখা হয়েছে, তাই বড় স্ক্রিনে আনুপাতিক হারে বাড়ে */
@@ -39,11 +55,22 @@
         scroll-behavior: smooth;
     }
 
+    /* Body text: Charcoal. Headings: Forest Green, Montserrat. */
     body {
         background-color: var(--color-white);
-        color: var(--color-cocoa);
+        color: var(--color-charcoal);
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+        color: var(--color-forest);
     }
 
     [x-cloak] {
@@ -52,15 +79,15 @@
 
     ::selection {
         background: var(--color-sand);
-        color: var(--color-cocoa);
+        color: var(--color-forest);
     }
 
     :focus-visible {
-        outline: 2px solid var(--color-mocha);
+        outline: 2px solid var(--color-forest);
         outline-offset: 3px;
     }
 
-    /* Search box: the browser's blue clear (x) button is replaced by a Deep Cocoa one */
+    /* Search box: the browser's blue clear (x) button is replaced by a Forest Green one */
     input[type='search']::-webkit-search-cancel-button {
         -webkit-appearance: none;
         appearance: none;
@@ -68,8 +95,22 @@
         height: 1rem;
         margin-left: 0.5rem;
         cursor: pointer;
-        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234E3727' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2307502F' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat;
     }
+}
+
+/*
+ * Heading weights (Brand Kit: Montserrat SemiBold / Bold).
+ * These rules are OUTSIDE any @layer on purpose: they beat Tailwind classes like "font-light",
+ * which the old headings still carry in the Blade files.
+ */
+.font-serif {
+    font-weight: 600;
+}
+
+h1,
+h1.font-serif {
+    font-weight: 700;
 }
 
 /* ---------- নেভ-লিংকের নিচে রেখা-টানা animation ---------- */
@@ -122,13 +163,13 @@
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.6s ease;
-    background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(231, 217, 196, 0.4), transparent 45%);
+    background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(248, 245, 236, 0.45), transparent 45%);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .tilt:hover {
         transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px);
-        box-shadow: 0 30px 50px -30px rgba(78, 55, 39, 0.5);
+        box-shadow: 0 30px 50px -30px rgba(7, 80, 47, 0.4);
     }
 
     .tilt:hover::after {
@@ -207,14 +248,14 @@
 .rich-content h1,
 .rich-content h2,
 .rich-content h3 {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    line-height: 1.2;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.25;
 }
 
-.rich-content h1 { font-size: 2.25rem; }
-.rich-content h2 { font-size: 1.875rem; margin-top: 2.5rem; }
-.rich-content h3 { font-size: 1.5rem; margin-top: 2rem; }
+.rich-content h1 { font-size: 2rem; }
+.rich-content h2 { font-size: 1.5rem; margin-top: 2.5rem; }
+.rich-content h3 { font-size: 1.25rem; margin-top: 2rem; }
 
 .rich-content ul { list-style: disc; padding-left: 1.5rem; }
 .rich-content ol { list-style: decimal; padding-left: 1.5rem; }
@@ -225,7 +266,7 @@
 }
 
 .rich-content blockquote {
-    border-left: 1px solid var(--color-taupe);
+    border-left: 2px solid var(--color-gold);
     padding-left: 1.25rem;
     font-style: italic;
 }

@@ -3,9 +3,11 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
+use App\Support\Brand;
 use App\Support\ImageProcessor;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +16,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
@@ -44,6 +47,8 @@ class ManageSettings extends Page
     public ?array $data = [];
 
     private const TEXT_KEYS = [
+        'brand_name',
+        'brand_tagline',
         'top_strip_text',
         'footer_address',
         'footer_phone',
@@ -68,11 +73,20 @@ class ManageSettings extends Page
         $values = [
             'hero_images' => Setting::heroImages(),
             'site_logo' => Setting::get('site_logo'),
+            'footer_logo' => Setting::get('footer_logo'),
             'site_favicon' => Setting::get('site_favicon'),
         ];
 
         foreach (self::TEXT_KEYS as $key) {
             $values[$key] = Setting::get($key);
+        }
+
+        // Brand: show what the shop uses right now (defaults included)
+        $values['brand_name'] = Brand::name();
+        $values['brand_tagline'] = Brand::tagline();
+
+        foreach (array_keys(Brand::COLORS) as $key) {
+            $values[$key] = Brand::color($key);
         }
 
         // Never saved yet: show the default text. Saved as empty: keep it empty (strip hidden).
@@ -82,6 +96,7 @@ class ManageSettings extends Page
 
         $values['low_stock_threshold'] = Setting::get('low_stock_threshold', self::DEFAULT_LOW_STOCK);
         $values['return_flag_limit'] = Setting::get('return_flag_limit', '3');
+
         foreach (array_keys(Setting::HERO_DEFAULTS) as $key) {
             $values[$key] = Setting::valueOrDefault($key);
         }
@@ -94,10 +109,26 @@ class ManageSettings extends Page
         return $schema
             ->components([
                 Form::make([
+                    Section::make('Brand')
+                        ->description('The name and the short line (tagline) of the shop. They show in the browser tab, the footer and the receipt.')
+                        ->columns(2)
+                        ->schema([
+                            TextInput::make('brand_name')
+                                ->label('Brand name')
+                                ->required()
+                                ->maxLength(60)
+                                ->placeholder(Brand::DEFAULT_NAME)
+                                ->helperText('Written exactly as you type it (capital letters stay as they are). The logo itself is a picture: change it in the Logo box below.'),
+                            TextInput::make('brand_tagline')
+                                ->label('Tagline (slogan)')
+                                ->maxLength(80)
+                                ->placeholder(Brand::DEFAULT_TAGLINE)
+                                ->helperText('Shown in the footer under the logo and in the browser tab of the home page. Leave empty to hide it.'),
+                        ]),
                     Section::make('Logo')
                         ->schema([
                             FileUpload::make('site_logo')
-                                ->label('Brand logo')
+                                ->label('Brand logo (menu)')
                                 ->disk('public')
                                 ->directory('branding')
                                 ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
@@ -111,7 +142,23 @@ class ManageSettings extends Page
                                         quality: 90,
                                     )
                                 )
-                                ->helperText('Shown at the left of the menu. Use a PNG with a transparent background, wide (horizontal) logo works best, max 2 MB. If empty, the text "Feminique" is shown.'),
+                                ->helperText('Shown at the left of the menu. Use the full-color logo as a PNG with a transparent background, max 2 MB. If empty, the brand name is shown as text.'),
+                            FileUpload::make('footer_logo')
+                                ->label('Footer logo (for the dark green footer)')
+                                ->disk('public')
+                                ->directory('branding')
+                                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                ->maxSize(2048)
+                                ->saveUploadedFileUsing(
+                                    fn (TemporaryUploadedFile $file): string => ImageProcessor::storeAsWebp(
+                                        $file->getRealPath(),
+                                        'branding',
+                                        errorField: 'data.footer_logo',
+                                        maxSide: 1200,
+                                        quality: 90,
+                                    )
+                                )
+                                ->helperText('The footer is dark green, so use the light / reverse version of the logo (PNG, transparent background, max 2 MB). If empty, the menu logo is shown on a small white box.'),
                             FileUpload::make('site_favicon')
                                 ->label('Favicon (browser tab icon)')
                                 ->disk('public')
@@ -121,7 +168,55 @@ class ManageSettings extends Page
                                 ->saveUploadedFileUsing(
                                     fn (TemporaryUploadedFile $file): string => self::storeFavicon($file)
                                 )
-                                ->helperText('PNG or ICO, max 512 KB. Use a square picture, for example 512 x 512 px. It is shown in the browser tab of the shop and of this admin panel. If empty, the browser default is used. Browsers remember the old icon for a while, so a change may take some time to show.'),
+                                ->helperText('PNG or ICO, max 512 KB. Use a square picture (the icon-only logo), for example 512 x 512 px. It is shown in the browser tab of the shop and of this admin panel. If empty, the browser default is used. Browsers remember the old icon for a while, so a change may take some time to show.'),
+                        ]),
+                    Section::make('Brand colors')
+                        ->description('Change the colors of the whole shop. They show at once, nothing to rebuild. Start from the HeshelMart brand colors. Keep Main color and Body text DARK so the text stays easy to read.')
+                        ->columns(2)
+                        ->schema([
+                            ColorPicker::make('brand_color_primary')
+                                ->label('Main brand color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('Headings, buttons, menu text, the top bar and the footer. White text sits on it, so use a dark color.'),
+                            ColorPicker::make('brand_color_accent')
+                                ->label('Accent color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('Thin lines, borders and small highlights. Do not use it for small text on white.'),
+                            ColorPicker::make('brand_color_text')
+                                ->label('Body text color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('Normal paragraphs and descriptions.'),
+                            ColorPicker::make('brand_color_soft')
+                                ->label('Soft panel color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('Empty picture boxes and light panels.'),
+                            ColorPicker::make('brand_color_ivory')
+                                ->label('Warm background color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('The glass menu, the receipt and light text on green.'),
+                            ColorPicker::make('brand_color_sand')
+                                ->label('Sand color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('Text selection and warm surfaces.'),
+                            ColorPicker::make('brand_color_danger')
+                                ->label('Error color')
+                                ->rule('regex:/^#[0-9A-Fa-f]{6}$/')
+                                ->helperText('Error messages and Cancelled marks. Keep it red.'),
+                            Actions::make([
+                                Action::make('resetColors')
+                                    ->label('Reset to HeshelMart brand colors')
+                                    ->color('gray')
+                                    ->action(function (Set $set): void {
+                                        foreach (Brand::COLORS as $key => $default) {
+                                            $set($key, $default);
+                                        }
+
+                                        Notification::make()
+                                            ->title('Colors reset')
+                                            ->body('Click "Save settings" to keep them.')
+                                            ->send();
+                                    }),
+                            ])->columnSpanFull(),
                         ]),
                     Section::make('Homepage hero images')
                         ->schema([
@@ -211,7 +306,7 @@ class ManageSettings extends Page
                                 ->prefix('Tk')
                                 ->helperText('Orders at or above this amount get free delivery. Leave empty to turn this off.'),
                         ]),
-                                        Section::make('Fake order protection')
+                    Section::make('Fake order protection')
                         ->schema([
                             TextInput::make('return_flag_limit')
                                 ->label('Red flag after this many returned orders')
@@ -280,8 +375,8 @@ class ManageSettings extends Page
         Setting::put('hero_images', $new ? json_encode($new, JSON_UNESCAPED_SLASHES) : null);
         Setting::put('hero_image', $new[0] ?? null);
 
-        // Logo and favicon: a replaced or removed file is deleted from disk
-        foreach (['site_logo', 'site_favicon'] as $key) {
+        // Logos and favicon: a replaced or removed file is deleted from disk
+        foreach (['site_logo', 'footer_logo', 'site_favicon'] as $key) {
             $file = $data[$key] ?? null;
 
             if (is_array($file)) {
@@ -297,10 +392,14 @@ class ManageSettings extends Page
             Setting::put($key, is_string($file) && $file !== '' ? $file : null);
         }
 
-        foreach (array_merge(self::TEXT_KEYS, array_keys(Setting::HERO_DEFAULTS)) as $key) {
+        $keys = array_merge(self::TEXT_KEYS, array_keys(Brand::COLORS), array_keys(Setting::HERO_DEFAULTS));
+
+        foreach ($keys as $key) {
             $value = $data[$key] ?? null;
             Setting::put($key, filled($value) ? trim((string) $value) : null);
         }
+
+        Brand::flush();
 
         Notification::make()
             ->success()

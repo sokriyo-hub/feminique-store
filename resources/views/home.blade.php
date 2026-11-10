@@ -1,7 +1,7 @@
 @php
     $slides = array_map(fn ($path) => asset('storage/' . $path), $heroPaths);
 @endphp
-<x-store-layout :description="__('Elegant jewellery and accessories for women.')" :overlay="true">
+<x-store-layout :description="\App\Support\Brand::description()" :overlay="true">
 
     {{-- Hero: starts right under the top strip; the round menu floats on top of it.
          Its height comes from the content, so nothing can overlap. --}}
@@ -21,7 +21,7 @@
                  :class="dragging ? '' : 'transition-transform duration-[900ms] ease-[cubic-bezier(0.22,0.7,0.2,1)]'"
                  :style="trackStyle">
                 @foreach ($slides as $url)
-                    <img src="{{ $url }}" alt="Feminique" draggable="false"
+                    <img src="{{ $url }}" alt="{{ \App\Support\Brand::name() }}" draggable="false"
                          @if ($loop->first) fetchpriority="high" @elseif ($loop->index > 1) loading="lazy" @endif
                          class="h-full w-full shrink-0 object-cover object-[72%_center] lg:object-center">
                 @endforeach

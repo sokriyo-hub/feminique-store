@@ -43,12 +43,12 @@
                              class="h-full w-full object-cover transition duration-[1400ms] ease-out group-hover:scale-[1.05]">
                     @else
                         <div class="flex h-full w-full items-center justify-center">
-                            <span class="font-serif text-lg uppercase tracking-[0.35em] text-cocoa/40">Feminique</span>
+                            <span class="font-serif text-lg tracking-wide text-cocoa/40tracking-wide text-cocoa/40">
                         </div>
                     @endif
                 </div>
                 <div class="mt-4">
-                    <span class="nav-link font-serif text-2xl leading-tight lg:text-[1.65rem]">{{ $category->name }}</span>
+                    <span class="nav-link font-serif text-2xl leading-tight text-forest lg:text-[1.65rem]">{{ $category->name }}</span>
                 </div>
             </a>
         @endforeach

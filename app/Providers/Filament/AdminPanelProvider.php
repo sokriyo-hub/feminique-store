@@ -59,7 +59,7 @@ HTML;
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Feminique')
+            ->brandName(fn (): string => \App\Support\Brand::name())
             ->favicon(fn (): ?string => self::faviconUrl())
             ->colors([
                 'primary' => Color::Amber,

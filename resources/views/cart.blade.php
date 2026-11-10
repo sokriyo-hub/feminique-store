@@ -34,7 +34,7 @@
                                 @if ($line->image)
                                     <img src="{{ asset('storage/' . $line->image->path) }}" alt="{{ $product->name }}" loading="lazy" class="h-full w-full object-cover">
                                 @else
-                                    <span class="flex h-full w-full items-center justify-center font-serif text-xs uppercase tracking-[0.3em] text-cocoa/40">Feminique</span>
+                                    <span class="flex h-full w-full items-center justify-center font-serif text-xs tracking-wide text-cocoa/40tracking-wide text-cocoa/40">
                                 @endif
                             </a>
 
