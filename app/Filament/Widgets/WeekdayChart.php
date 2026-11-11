@@ -26,7 +26,7 @@ class WeekdayChart extends ChartWidget
 
     protected function getData(): array
     {
-        $byDay = Order::where('status', '!=', 'cancelled')
+        $byDay = Order::counted()
             ->where('created_at', '>=', now()->subDays(89)->startOfDay())
             ->get(['created_at'])
             ->countBy(fn ($order) => $order->created_at->dayOfWeekIso);

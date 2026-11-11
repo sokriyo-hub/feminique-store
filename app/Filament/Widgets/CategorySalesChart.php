@@ -16,7 +16,7 @@ class CategorySalesChart extends ChartWidget
 
     public function getDescription(): ?string
     {
-        return 'Cancelled orders are not counted.';
+        return 'Cancelled and returned orders are not counted.';
     }
 
     protected function getType(): string
@@ -30,7 +30,7 @@ class CategorySalesChart extends ChartWidget
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->join('products', 'products.id', '=', 'order_items.product_id')
             ->join('categories', 'categories.id', '=', 'products.category_id')
-            ->where('orders.status', '!=', 'cancelled')
+            ->whereNotIn('orders.status', ['cancelled', 'returned'])
             ->selectRaw('categories.name as label, SUM(order_items.line_total) as total')
             ->groupBy('categories.id', 'categories.name')
             ->orderByDesc('total')

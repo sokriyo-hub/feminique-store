@@ -28,7 +28,7 @@ class TopProductsChart extends ChartWidget
     {
         $rows = OrderItem::query()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->where('orders.status', '!=', 'cancelled')
+            ->whereNotIn('orders.status', ['cancelled', 'returned'])
             ->selectRaw('order_items.product_name as label, SUM(order_items.quantity) as pieces')
             ->groupBy('order_items.product_name')
             ->orderByDesc('pieces')

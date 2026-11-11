@@ -21,11 +21,11 @@ class StoreStats extends StatsOverviewWidget
         $monthStart = now()->startOfMonth();
         $lastMonthStart = now()->subMonthNoOverflow()->startOfMonth();
 
-        $current = Order::where('status', '!=', 'cancelled')->where('created_at', '>=', $monthStart);
+        $current = Order::counted()->where('created_at', '>=', $monthStart);
         $currentSales = (float) (clone $current)->sum('total');
         $currentOrders = (clone $current)->count();
 
-        $lastSales = (float) Order::where('status', '!=', 'cancelled')
+        $lastSales = (float) Order::counted()
             ->where('created_at', '>=', $lastMonthStart)
             ->where('created_at', '<', $monthStart)
             ->sum('total');
@@ -38,7 +38,7 @@ class StoreStats extends StatsOverviewWidget
             : $currentOrders . ' orders')
             . ' · Today: ' . $today;
 
-        $average = (float) Order::where('status', '!=', 'cancelled')->avg('total');
+        $average = (float) Order::counted()->avg('total');
 
         $customers = Order::distinct()->count('phone');
         $returning = Order::query()
@@ -58,7 +58,7 @@ class StoreStats extends StatsOverviewWidget
                     : Heroicon::OutlinedArrowTrendingUp)
                 ->color($change !== null && $change < 0 ? 'danger' : 'success'),
             Stat::make('Average order value', Money::format($average))
-                ->description('Per order, cancelled not counted')
+                ->description('Per order, cancelled and returned not counted')
                 ->descriptionIcon(Heroicon::OutlinedBanknotes)
                 ->color('primary'),
             Stat::make('Customers', $customers)

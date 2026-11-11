@@ -23,7 +23,7 @@ class Popular
         $soldIds = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->join('products', 'products.id', '=', 'order_items.product_id')
-            ->where('orders.status', '!=', 'cancelled')
+            ->whereNotIn('orders.status', ['cancelled', 'returned'])
             ->where('orders.created_at', '>=', now()->subDays(self::DAYS))
             ->when($categoryIds !== null, fn ($query) => $query->whereIn('products.category_id', $categoryIds))
             ->groupBy('order_items.product_id')

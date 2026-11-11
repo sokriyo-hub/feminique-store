@@ -20,7 +20,7 @@ class SalesChart extends ChartWidget
 
     public function getDescription(): ?string
     {
-        return 'Cancelled orders are not counted.';
+       return 'Cancelled and returned orders are not counted.';
     }
 
     protected function getFilters(): ?array
@@ -42,7 +42,7 @@ class SalesChart extends ChartWidget
         $days = (int) ($this->filter ?? 30);
         $from = now()->subDays($days - 1)->startOfDay();
 
-        $byDay = Order::where('status', '!=', 'cancelled')
+         $byDay = Order::counted()
             ->where('created_at', '>=', $from)
             ->get(['created_at', 'total'])
             ->groupBy(fn ($order) => $order->created_at->format('Y-m-d'))

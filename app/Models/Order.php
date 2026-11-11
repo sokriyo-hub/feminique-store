@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Builder;
 
 class Order extends Model
 {
@@ -52,6 +53,12 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    // Orders that count as real sales: not cancelled and not returned
+    public function scopeCounted(Builder $query): Builder
+    {
+        return $query->whereNotIn('status', ['cancelled', 'returned']);
     }
 
     // Returned orders of the same mobile number that count toward the red flag
