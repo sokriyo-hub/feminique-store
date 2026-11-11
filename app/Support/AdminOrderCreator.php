@@ -4,13 +4,11 @@ namespace App\Support;
 
 use App\Models\DeliveryZone;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
 
 /**
  * An order typed in by the admin (Order desk): phone, Facebook, WhatsApp, walk-in ...
- * Stock is taken exactly like a website order (rows locked, checked, then reduced).
+ * Stock is taken exactly like a website order (the same OrderLines code: rows locked, checked, then reduced).
  */
 class AdminOrderCreator
 {
@@ -71,18 +69,11 @@ class AdminOrderCreator
         $source = array_key_exists($data['source'] ?? '', Order::deskSourceOptions()) ? $data['source'] : 'other';
 
         return DB::transaction(function () use ($data, $phone, $zone, $lines, $discount, $custom, $hasCustomCharge, $status, $source): array {
-            // Lock rows always in the same order (by id), like checkout does
-            $products = Product::whereIn('id', array_unique(array_column($lines, 'product_id')))
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $variantIds = array_values(array_filter(array_unique(array_column($lines, 'variant_id'))));
-
-            $variants = $variantIds
-                ? ProductVariant::whereIn('id', $variantIds)->orderBy('id')->lockForUpdate()->get()->keyBy('id')
-                : collect();
+            // Lock rows always in the same order (by id), in the shared code
+            [$products, $variants] = OrderLines::lock(
+                array_column($lines, 'product_id'),
+                array_column($lines, 'variant_id'),
+            );
 
             $rows = [];
             $need = [];
@@ -158,28 +149,8 @@ class AdminOrderCreator
                 'stock_deducted' => true,
             ]);
 
-            foreach ($rows as $row) {
-                $product = $row['product'];
-                $variant = $row['variant'];
-
-                $order->items()->create([
-                    'product_id' => $product->id,
-                    'product_variant_id' => $variant?->id,
-                    'product_name' => $product->name,
-                    'variant_label' => $variant?->label(),
-                    'sku' => $variant?->sku ?? $product->sku,
-                    'regular_price' => $row['regular'],
-                    'unit_price' => $row['unit'],
-                    'quantity' => $row['quantity'],
-                    'line_total' => $row['total'],
-                ]);
-
-                if ($variant) {
-                    $variant->decrement('stock', $row['quantity']);
-                } else {
-                    $product->decrement('stock', $row['quantity']);
-                }
-            }
+            // Same code as the website checkout: save the lines and reduce the stock
+            OrderLines::save($order, $rows);
 
             return [$order, null];
         });

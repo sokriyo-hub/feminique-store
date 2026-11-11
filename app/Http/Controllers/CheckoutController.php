@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\DeliveryZone;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Support\CampaignPricing;
 use App\Support\Cart;
 use App\Support\Delivery;
+use App\Support\OrderLines;
 use App\Support\Phone;
 use App\Support\ReturnGuard;
 use Illuminate\Contracts\View\View;
@@ -100,7 +99,7 @@ class CheckoutController
         }
 
         // For the admin only (shown on the order details, never used to block anybody)
-        $ip = substr((string) $request->ip(), 0, 45);    
+        $ip = substr((string) $request->ip(), 0, 45);
 
         // The total the customer saw on the checkout page (null = an old form without it)
         $seen = isset($data['seen_total']) ? (float) $data['seen_total'] : null;
@@ -124,18 +123,11 @@ class CheckoutController
                 return null;
             }
 
-            // lock সবসময় একই ক্রমে (id অনুযায়ী), যাতে দুই order একে অপরকে আটকে না দেয়
-            $products = Product::whereIn('id', array_unique(array_column($parsed, 0)))
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $variantIds = array_values(array_filter(array_column($parsed, 1)));
-
-            $variants = $variantIds
-                ? ProductVariant::whereIn('id', $variantIds)->orderBy('id')->lockForUpdate()->get()->keyBy('id')
-                : collect();
+            // lock সবসময় একই ক্রমে (id অনুযায়ী), shared code-এ
+            [$products, $variants] = OrderLines::lock(
+                array_column($parsed, 0),
+                array_column($parsed, 1),
+            );
 
             $rows = [];
 
@@ -202,30 +194,8 @@ class CheckoutController
                 'stock_deducted' => true,
             ]);
 
-            foreach ($rows as $row) {
-                $product = $row['product'];
-                $variant = $row['variant'];
-
-                // নাম, দাম, variant ও SKU-র snapshot: পরে product বদলালেও order বদলাবে না
-                $order->items()->create([
-                    'product_id' => $product->id,
-                    'product_variant_id' => $variant?->id,
-                    'product_name' => $product->name,
-                    'variant_label' => $variant?->label(),
-                    'sku' => $variant?->sku ?? $product->sku,
-                    'regular_price' => $row['regular'],
-                    'unit_price' => $row['unit'],
-                    'quantity' => $row['quantity'],
-                    'line_total' => $row['total'],
-                ]);
-
-                // stock কমানো
-                if ($variant) {
-                    $variant->decrement('stock', $row['quantity']);
-                } else {
-                    $product->decrement('stock', $row['quantity']);
-                }
-            }
+            // নাম, দাম, variant ও SKU-র snapshot লেখা + stock কমানো (shared code)
+            OrderLines::save($order, $rows);
 
             return $order;
         });
